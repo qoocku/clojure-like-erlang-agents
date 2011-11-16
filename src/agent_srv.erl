@@ -151,10 +151,11 @@ next (Next, State, undefined) -> %% ignore the version
 next (Next, State = #state{vsn = Vsn0}, {Vsn0, _}) -> %% no change in version
   next_aux(Next, State);
 next (_Next, State, {_, OffFun}) -> %% change in version
-  error_logger:error_report([{module, ?MODULE},
-                             {where, shift_state},
-                             {what, version_error},
-                             {agent, self()}]),
+  error_logger:info_report([{module, ?MODULE},
+                            {where, shift_state},
+                            {what, transaction_retry},
+                            {transaction, OffFun},
+                            {agent, self()}]),
   send_off(OffFun, State, true).
 
 %% @hidden
