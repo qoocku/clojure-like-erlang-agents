@@ -91,4 +91,8 @@ Agent:send(fun (_, V) -> {ok, V+1} end).
 </pre>
 (the OTP equivalent is {@link //agents/agent:start_link_ref/1. agent:start_link_ref/1,3}) and three-argument versions.
 
+=== Repository ===
+
+["https://github.com/qoocku/clojure-like-erlang-agents" Find at GitHub]
+
 (to be continued...)
