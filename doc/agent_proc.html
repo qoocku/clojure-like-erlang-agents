@@ -9,42 +9,76 @@
 <hr>
 
 <h1>Module agent_proc</h1>
-<ul class="index"><li><a href="#description">Description</a></li><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>An implementation of agent process not to be supervised (OTP non-compliant).
+<ul class="index"><li><a href="#description">Description</a></li><li><a href="#types">Data Types</a></li><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>An implementation of agent process not to be supervised (OTP non-compliant).
 
+<p><b>Introduced in:</b> 2011-11-15</p>
+<p><b>Authors:</b> Damian T. Dobroczy\\'nski.</p>
 
 <h2><a name="description">Description</a></h2>An implementation of agent process not to be supervised (OTP non-compliant).
-  
+<h2><a name="types">Data Types</a></h2>
+
+<h3 class="typedecl"><a name="type-state">state()</a></h3>
+<p><tt>state() = #state{value = undefined | any(), vfun = undefined | <a href="agent.html#type-validation_fun">agent:validation_fun()</a>, tfun = undefined | <a href="agent.html#type-timeout_fun">agent:timeout_fun()</a>}</tt></p>
+<p>  The internal agent process state.</p>
+
 <h2><a name="index">Function Index</a></h2>
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#init-1">init/1</a></td><td></td></tr>
-<tr><td valign="top"><a href="#loop-1">loop/1</a></td><td></td></tr>
-<tr><td valign="top"><a href="#send_off-3">send_off/3</a></td><td></td></tr>
-<tr><td valign="top"><a href="#start-1">start/1</a></td><td></td></tr>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#error_report-5">error_report/5*</a></td><td>Logs error.</td></tr>
+<tr><td valign="top"><a href="#eval-4">eval/4*</a></td><td>Evaluates agent function.</td></tr>
+<tr><td valign="top"><a href="#init-1">init/1</a></td><td>Process initialisation.</td></tr>
+<tr><td valign="top"><a href="#loop-1">loop/1</a></td><td>Agent process main loop.</td></tr>
+<tr><td valign="top"><a href="#next-2">next/2*</a></td><td>Shifts the agent to the next state.</td></tr>
+<tr><td valign="top"><a href="#start-1">start/1</a></td><td>Starts simple agent process.</td></tr>
 </table>
 
 <h2><a name="functions">Function Details</a></h2>
 
+<h3 class="function"><a name="error_report-5">error_report/5 *</a></h3>
+<div class="spec">
+<p><tt>error_report(Context::validation | timeout | send | send_off, E::atom(), R::term(), Pid::pid(), Rest::list()) -&gt; any()</tt><br></p>
+</div><p>Logs error.
+  Error <code>E</code> is logged with given <code>Context</code>, reason <code>R</code>, agent pid <code>Pid</code> and
+  rest of report entries list in <code>Rest</code>.
+ </p>
+
+<h3 class="function"><a name="eval-4">eval/4 *</a></h3>
+<div class="spec">
+<p><tt>eval(Context::validation | timeout | send | send_off, Pid::pid(), Fun::<a href="agent.html#type-validation_fun">agent:validation_fun()</a> | <a href="agent.html#type-timeout_fun">agent:timeout_fun()</a> | <a href="agent.html#type-agent_fun">agent:agent_fun()</a>, V::any()) -&gt; <a href="agent.html#type-callback_result">agent:callback_result()</a> | boolean()</tt><br></p>
+</div><p>Evaluates agent function.
+  If an exception is caught, the error is logged, and specific value is
+  returned so that the agent stops it's loop.
+ </p>
+
 <h3 class="function"><a name="init-1">init/1</a></h3>
 <div class="spec">
-<p><tt>init(State) -&gt; any()</tt></p>
-</div>
+<p><tt>init(State::<a href="#type-state">state()</a>) -&gt; none()</tt><br></p>
+</div><p>Process initialisation.
+ </p>
 
 <h3 class="function"><a name="loop-1">loop/1</a></h3>
 <div class="spec">
-<p><tt>loop(State) -&gt; any()</tt></p>
-</div>
+<p><tt>loop(State::stop | <a href="#type-state">state()</a>) -&gt; none()</tt><br></p>
+</div><p>Agent process main loop.
+ </p>
 
-<h3 class="function"><a name="send_off-3">send_off/3</a></h3>
+<h3 class="function"><a name="next-2">next/2 *</a></h3>
 <div class="spec">
-<p><tt>send_off(Self, Value, Fun) -&gt; any()</tt></p>
-</div>
+<p><tt>next(Change::(none | stop | {vfun, <a href="agent.html#type-validation_fun">agent:validation_fun()</a>} | {tfun, <a href="agent.html#type-timeout_fun">agent:timeout_fun()</a>} | <a href="agent.html#type-callback_result">agent:callback_result()</a> | any()), State::<a href="#type-state">state()</a>) -&gt; <a href="#type-state">state()</a> | stop</tt><br></p>
+</div><p>Shifts the agent to the next state.
+  The next state may be loop continuation with the new state value or
+  exiting the message loop.
+ </p>
 
 <h3 class="function"><a name="start-1">start/1</a></h3>
 <div class="spec">
-<p><tt>start(X1) -&gt; any()</tt></p>
-</div>
+<p><tt>start(X1::[any() | <a href="agent.html#type-validation_fun">agent:validation_fun()</a> | <a href="agent.html#type-timeout_fun">agent:timeout_fun()</a>]) -&gt; {ok, pid()}</tt><br></p>
+</div><p>Starts simple agent process.
+  The arguments lsit must contain <code>State0</code> value and optionaly
+  validation and timeout function.
+  The agent has initial state value set to <code>State0</code>.
+ </p>
 <hr>
 
 <div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
-<p><i>Generated by EDoc, Nov 16 2011, 19:32:05.</i></p>
+<p><i>Generated by EDoc, Nov 16 2011, 21:28:41.</i></p>
 </body>
 </html>

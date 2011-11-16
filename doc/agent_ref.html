@@ -9,25 +9,29 @@
 <hr>
 
 <h1>Abstract module agent_ref [Agent]</h1>
-<ul class="index"><li><a href="#types">Data Types</a></li><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>
+<ul class="index"><li><a href="#description">Description</a></li><li><a href="#types">Data Types</a></li><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>Toy client agent process reference.
 
+<p><b>Introduced in:</b> 2011-11-16</p>
+<p><b>Authors:</b> Damian T. Dobroczy\\'nski.</p>
 
+<h2><a name="description">Description</a></h2>Toy client agent process reference.
+   Just because I can.
 <h2><a name="types">Data Types</a></h2>
 
 <h3 class="typedecl"><a name="type-ref">ref()</a></h3>
-<p><tt>ref() = {'?MODULE', <a href="agent.html#type-agent_ref">agent:agent_ref()</a>}</tt></p>
-
+<p><tt>ref() = {agent_ref, <a href="agent.html#type-agent_ref">agent:agent_ref()</a>}</tt></p>
+<p>  Type of this module instance.</p>
 
 <h2><a name="index">Function Index</a></h2>
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#add_watch-1">add_watch/1</a></td><td></td></tr>
-<tr><td valign="top"><a href="#get-1">get/1</a></td><td></td></tr>
-<tr><td valign="top"><a href="#is-1">is/1</a></td><td></td></tr>
-<tr><td valign="top"><a href="#new-1">new/1</a></td><td></td></tr>
-<tr><td valign="top"><a href="#pid-0">pid/0</a></td><td></td></tr>
-<tr><td valign="top"><a href="#send-1">send/1</a></td><td></td></tr>
-<tr><td valign="top"><a href="#send_off-1">send_off/1</a></td><td></td></tr>
-<tr><td valign="top"><a href="#set-2">set/2</a></td><td></td></tr>
-<tr><td valign="top"><a href="#state-0">state/0</a></td><td></td></tr>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#add_watch-1">add_watch/1</a></td><td>Adds a watching function to an agent.</td></tr>
+<tr><td valign="top"><a href="#get-1">get/1</a></td><td>Gets agent's property.</td></tr>
+<tr><td valign="top"><a href="#is-1">is/1</a></td><td>Test some agent's properties or equalness.</td></tr>
+<tr><td valign="top"><a href="#new-1">new/1</a></td><td>Creates a new instance of this module.</td></tr>
+<tr><td valign="top"><a href="#pid-0">pid/0</a></td><td>Returns agent's process pid.</td></tr>
+<tr><td valign="top"><a href="#send-1">send/1</a></td><td>Sends a function to an agent.</td></tr>
+<tr><td valign="top"><a href="#send_off-1">send_off/1</a></td><td>Sends a function off an agent.</td></tr>
+<tr><td valign="top"><a href="#set-2">set/2</a></td><td>Sets agent's property.</td></tr>
+<tr><td valign="top"><a href="#state-0">state/0</a></td><td>Returns agent's state value.</td></tr>
 </table>
 
 <h2><a name="functions">Function Details</a></h2>
@@ -35,50 +39,60 @@
 <h3 class="function"><a name="add_watch-1">add_watch/1</a></h3>
 <div class="spec">
 <p><tt>add_watch(Fun::<a href="agent.html#type-watch_fun">agent:watch_fun()</a>) -&gt; ok</tt><br></p>
-</div>
+</div><p>Equivalent to <a href="agent.html#add_watch-2"><tt>agent:add_watch(Agent, Fun)</tt></a>.</p>
+<p>Adds a watching function to an agent.</p>
 
 <h3 class="function"><a name="get-1">get/1</a></h3>
 <div class="spec">
 <p><tt>get(Property::<a href="agent.html#type-property">agent:property()</a>) -&gt; ok</tt><br></p>
-</div>
+</div><p>Equivalent to <a href="agent.html#get-2"><tt>agent:get(Agent, Property)</tt></a>.</p>
+<p>Gets agent's property.</p>
 
 <h3 class="function"><a name="is-1">is/1</a></h3>
 <div class="spec">
 <p><tt>is(AgentOrProperty::<a href="agent.html#type-agent_ref">agent:agent_ref()</a> | <a href="#type-ref">ref()</a> | alive) -&gt; boolean()</tt><br></p>
-</div>
+</div><p>Equivalent to <a href="agent.html#is-2"><tt>agent:is(Agent, AgentOrProperty)</tt></a>.</p>
+<p>Test some agent's properties or equalness.</p>
 
 <h3 class="function"><a name="new-1">new/1</a></h3>
 <div class="spec">
 <p><tt>new(A::<a href="agent.html#type-agent_ref">agent:agent_ref()</a>) -&gt; <a href="#type-ref">ref()</a></tt><br></p>
-</div>
+</div><p>Creates a new instance of this module.
+  The parameter <code>Agent</code> is set to <code>A</code> value.
+ </p>
 
 <h3 class="function"><a name="pid-0">pid/0</a></h3>
 <div class="spec">
 <p><tt>pid() -&gt; {ok, pid()}</tt><br></p>
-</div>
+</div><p>Equivalent to <a href="agent.html#pid-1"><tt>agent:pid(Agent)</tt></a>.</p>
+<p>Returns agent's process pid.</p>
 
 <h3 class="function"><a name="send-1">send/1</a></h3>
 <div class="spec">
 <p><tt>send(Fun::<a href="agent.html#type-agent_fun">agent:agent_fun()</a>) -&gt; ok</tt><br></p>
-</div>
+</div><p>Equivalent to <a href="agent.html#send-2"><tt>agent:send(Agent, Fun)</tt></a>.</p>
+<p>Sends a function to an agent.</p>
 
 <h3 class="function"><a name="send_off-1">send_off/1</a></h3>
 <div class="spec">
 <p><tt>send_off(Fun::<a href="agent.html#type-agent_fun">agent:agent_fun()</a>) -&gt; ok</tt><br></p>
-</div>
+</div><p>Equivalent to <a href="agent.html#send_off-2"><tt>agent:send_off(Agent, Fun)</tt></a>.</p>
+<p>Sends a function off an agent.</p>
 
 <h3 class="function"><a name="set-2">set/2</a></h3>
 <div class="spec">
 <p><tt>set(Property::<a href="agent.html#type-property">agent:property()</a>, Value::<a href="agent.html#type-property_value">agent:property_value()</a>) -&gt; ok</tt><br></p>
-</div>
+</div><p>Equivalent to <a href="agent.html#set-3"><tt>agent:set(Agent, Property, Value)</tt></a>.</p>
+<p>Sets agent's property.</p>
 
 <h3 class="function"><a name="state-0">state/0</a></h3>
 <div class="spec">
 <p><tt>state() -&gt; {ok, any()}</tt><br></p>
-</div>
+</div><p>Equivalent to <a href="agent.html#state-1"><tt>agent:state(Agent)</tt></a>.</p>
+<p>Returns agent's state value.</p>
 <hr>
 
 <div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
-<p><i>Generated by EDoc, Nov 16 2011, 19:32:06.</i></p>
+<p><i>Generated by EDoc, Nov 16 2011, 21:28:41.</i></p>
 </body>
 </html>

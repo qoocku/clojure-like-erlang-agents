@@ -9,64 +9,90 @@
 <hr>
 
 <h1>Module agent_srv</h1>
-<ul class="index"><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>
+<ul class="index"><li><a href="#description">Description</a></li><li><a href="#types">Data Types</a></li><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>The OTP compliant agent process implementation.
+
+<p><b>Introduced in:</b> 2011-11-15</p>
+<p><b>Authors:</b> Damian T. Dobroczy\\'nski.</p>
+
+<h2><a name="description">Description</a></h2>The OTP compliant agent process implementation.
+   Uses <a href="http://www.erlang.org/doc/man/gen_server.html" target="_top">gen_server</a> framework.
+<h2><a name="types">Data Types</a></h2>
+
+<h3 class="typedecl"><a name="type-state">state()</a></h3>
+<p><tt>state() = #state{value = undefined | any(), vfun = undefined | <a href="agent.html#type-validation_fun">agent:validation_fun()</a>, tfun = undefined | <a href="agent.html#type-timeout_fun">agent:timeout_fun()</a>}</tt></p>
 
 
 <h2><a name="index">Function Index</a></h2>
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#code_change-3">code_change/3</a></td><td></td></tr>
-<tr><td valign="top"><a href="#handle_call-3">handle_call/3</a></td><td></td></tr>
-<tr><td valign="top"><a href="#handle_cast-2">handle_cast/2</a></td><td></td></tr>
-<tr><td valign="top"><a href="#handle_info-2">handle_info/2</a></td><td></td></tr>
-<tr><td valign="top"><a href="#init-1">init/1</a></td><td></td></tr>
-<tr><td valign="top"><a href="#next-2">next/2</a></td><td></td></tr>
-<tr><td valign="top"><a href="#send_off-2">send_off/2</a></td><td></td></tr>
-<tr><td valign="top"><a href="#terminate-2">terminate/2</a></td><td></td></tr>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#code_change-3">code_change/3</a></td><td>Agent's code evolution.</td></tr>
+<tr><td valign="top"><a href="#handle_call-3">handle_call/3</a></td><td>Handles implementation internal synchronous messages.</td></tr>
+<tr><td valign="top"><a href="#handle_cast-2">handle_cast/2</a></td><td>Handles implementation internal asynchronous messages.</td></tr>
+<tr><td valign="top"><a href="#handle_info-2">handle_info/2</a></td><td>Handles implementation internal non-gen_server messages.</td></tr>
+<tr><td valign="top"><a href="#init-1">init/1</a></td><td>Initialises the agent's process.</td></tr>
+<tr><td valign="top"><a href="#notify_watchers-2">notify_watchers/2*</a></td><td>Notify agent's watchers that the state value has been set.</td></tr>
+<tr><td valign="top"><a href="#send_off-2">send_off/2</a></td><td>Starts send-off process.</td></tr>
+<tr><td valign="top"><a href="#terminate-2">terminate/2</a></td><td>Terminates the agent's process.</td></tr>
 </table>
 
 <h2><a name="functions">Function Details</a></h2>
 
 <h3 class="function"><a name="code_change-3">code_change/3</a></h3>
 <div class="spec">
-<p><tt>code_change(OldVsn, State, Extra) -&gt; any()</tt></p>
-</div>
+<p><tt>code_change(OldVsn::any(), State::<a href="#type-state">state()</a>, Extra::any()) -&gt; {ok, <a href="#type-state">state()</a>}</tt><br></p>
+</div><p>Agent's code evolution.
+  See <a href="http://www.erlang.org/doc/man/gen_server.html#Module:code_change-3" target="_top">gen_server `code_change' callback</a>
+ </p>
 
 <h3 class="function"><a name="handle_call-3">handle_call/3</a></h3>
 <div class="spec">
-<p><tt>handle_call(X1, From, State) -&gt; any()</tt></p>
-</div>
+<p><tt>handle_call(X1::state | validation | timeout | shutdown, From::term(), State::<a href="#type-state">state()</a>) -&gt; {reply, {ok, any()}, <a href="#type-state">state()</a>} | {stop, normal, <a href="#type-state">state()</a>}</tt><br></p>
+</div><p>Handles implementation internal synchronous messages.
+  See <a href="http://www.erlang.org/doc/man/gen_server.html#Module:handle_call-3" target="_top">gen_server `handle_call' callback</a>
+ </p>
 
 <h3 class="function"><a name="handle_cast-2">handle_cast/2</a></h3>
 <div class="spec">
-<p><tt>handle_cast(X1, State) -&gt; any()</tt></p>
-</div>
+<p><tt>handle_cast(X1::{add_watch, <a href="agent.html#type-watch_fun">agent:watch_fun()</a>} | {'$next', <a href="agent.html#type-callback_result">agent:callback_result()</a>} | shutdown | {validation, <a href="agent.html#type-validation_fun">agent:validation_fun()</a>} | {timeout, <a href="agent.html#type-timeout_fun">agent:timeout_fun()</a>} | {send, <a href="agent.html#type-agent_fun">agent:agent_fun()</a>} | {send_off, <a href="agent.html#type-agent_fun">agent:agent_fun()</a>}, State::<a href="#type-state">state()</a>) -&gt; {noreply, <a href="#type-state">state()</a>} | {stop, normal | {invalid_state_value, any()}}</tt><br></p>
+</div><p>Handles implementation internal asynchronous messages.
+  See <a href="http://www.erlang.org/doc/man/gen_server.html#Module:handle_cast-2" target="_top">gen_server `handle_cast' callback</a>
+ </p>
 
 <h3 class="function"><a name="handle_info-2">handle_info/2</a></h3>
 <div class="spec">
-<p><tt>handle_info(X1, State) -&gt; any()</tt></p>
-</div>
+<p><tt>handle_info(X1::{'DOWN', any(), process, pid(), any()} | timeout, State::<a href="#type-state">state()</a>) -&gt; {noreply, <a href="#type-state">state()</a>} | {stop, {invalid_state_value, any()}, <a href="#type-state">state()</a>}</tt><br></p>
+</div><p>Handles implementation internal non-gen_server messages.
+  The messages comes from timer and watchers processes.
+  See <a href="http://www.erlang.org/doc/man/gen_server.html#Module:handle_info-2" target="_top">gen_server `handle_info' callback</a>
+ </p>
 
 <h3 class="function"><a name="init-1">init/1</a></h3>
 <div class="spec">
-<p><tt>init(X1) -&gt; any()</tt></p>
-</div>
+<p><tt>init(X1::{any(), <a href="agent.html#type-validation_fun">agent:validation_fun()</a>, <a href="agent.html#type-timeout_fun">agent:timeout_fun()</a>}) -&gt; {ok, <a href="#type-state">state()</a>}</tt><br></p>
+</div><p>Initialises the agent's process.
+  See <a href="http://www.erlang.org/doc/man/gen_server.html#Module:init-1" target="_top">gen_server `init' callback</a>
+ </p>
 
-<h3 class="function"><a name="next-2">next/2</a></h3>
+<h3 class="function"><a name="notify_watchers-2">notify_watchers/2 *</a></h3>
 <div class="spec">
-<p><tt>next(X1, State) -&gt; any()</tt></p>
-</div>
+<p><tt>notify_watchers(OldVal::any(), NewVal::any()) -&gt; any()</tt><br></p>
+</div><p>Notify agent's watchers that the state value has been set.</p>
+<p><b>See also:</b> <a href="agent_proc.html#notify_watchers-2">agent_proc:notify_watchers/2</a>.</p>
 
 <h3 class="function"><a name="send_off-2">send_off/2</a></h3>
 <div class="spec">
-<p><tt>send_off(Fun, State) -&gt; any()</tt></p>
-</div>
+<p><tt>send_off(Fun::<a href="agent.html#type-agent_fun">agent:agent_fun()</a>, State::<a href="#type-state">state()</a>) -&gt; {noreply, <a href="#type-state">state()</a>}</tt><br></p>
+</div><p>Starts send-off process.
+ </p>
 
 <h3 class="function"><a name="terminate-2">terminate/2</a></h3>
 <div class="spec">
-<p><tt>terminate(Reason, State) -&gt; any()</tt></p>
-</div>
+<p><tt>terminate(Reason::normal | {invalid_state_value, any()}, State::<a href="#type-state">state()</a>) -&gt; any()</tt><br></p>
+</div><p>Terminates the agent's process.
+  So far does nothing.
+  See <a href="http://www.erlang.org/doc/man/gen_server.html#Module:terminate-2" target="_top">gen_server `terminate' callback</a>
+ </p>
 <hr>
 
 <div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
-<p><i>Generated by EDoc, Nov 16 2011, 19:32:06.</i></p>
+<p><i>Generated by EDoc, Nov 16 2011, 21:28:41.</i></p>
 </body>
 </html>
