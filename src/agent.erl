@@ -1,4 +1,10 @@
+%%%
+%%% @doc Agent client API.
+%%% @author Damian T. dobroczy\\'nski
+%%% @since 2011-11-15
+%%%
 -module (agent).
+-author ("Damian T. Dobroczy\\\\'nski <qoocku@gmail.com>").
 -export ([% starting & stopping
           start/1,
           start/3,
@@ -23,8 +29,6 @@
           % internal exports
           call/2,
           cast/2]).
-
--include_lib ("eunit/include/eunit.hrl").
 
 %%% ===========================================================================
 %%% P u b l i c  A P I 
@@ -63,8 +67,8 @@ start (InitialState) ->
   do_start(start, InitialState).
 
 %%
-%% @doc Start unsupervised agent with the `InitialState' as initial value, validation
-%% function set to `VFun' and timeout function set to `TFun'. The result contains the
+%% @doc Start unsupervised agent with the `InitialState' as initial value. The validation
+%% function set is to `VFun' and timeout function set to `TFun'. The result contains the
 %% agent reference which currently is a <em>pid</em>.
 %%
 %% @see start/1
@@ -92,8 +96,8 @@ start_ref (InitialState) ->
   {ok, agent_ref:new(Agent)}.
 
 %%
-%% @doc Start unsupervised agent with the `InitialState' as initial value, validation
-%% function set to `VFun' and timeout function set to `TFun'. 
+%% @doc Start unsupervised agent with the `InitialState' as initial value. The validation
+%% function is set to `VFun' and timeout function is set to `TFun'. 
 %% The result is parametrized module instance `agent_ref[]'.
 %%
 %% @see start_ref/1
@@ -151,8 +155,8 @@ start_link_ref (InitialState) ->
   {ok, agent_ref:new(Agent)}.
 
 %%
-%% @doc Starts an agent to be supervised with the `InitialState' as initial value, validation
-%% function set to `VFun' and timeout function set to `TFun'.
+%% @doc Starts an agent to be supervised with the `InitialState' as initial value. The validation
+%% function is set to `VFun' and timeout function is set to `TFun'.
 %% The result is parametrized module instance `agent_ref[]'.
 %%
 %% @see start_ref/3
@@ -197,7 +201,7 @@ sync_stop (Agent) when is_pid(Agent) ->
 %%% Meta-features accessors
 
 %%
-%% @doc Sets an agent property which may be:
+%% @doc Sets an agent property. The property may be:
 %% <ul>
 %% <li>`validation' -- which stands for the agent's validation function;</li>
 %% <li>`timeout' -- which stands for the agent's timeout function;</li>
@@ -218,7 +222,7 @@ set (Agent, Property, Value) when is_pid(Agent) andalso
   ok.
 
 %%
-%% @doc Returns an agent property which may be:
+%% @doc Returns an agent property. The property may be:
 %% <ul>
 %% <li>`validation' -- which stands for the agent's validation function;</li>
 %% <li>`timeout' -- which stands for the agent's timeout function;</li>
@@ -244,7 +248,7 @@ pid (Agent) when is_pid(Agent) ->
   Agent.
 
 %%
-%% @doc Tests for:
+%% @doc Tests agent's properties. The tests includes:
 %% <ul>
 %% <li>the equality of agent references iff `_Arg' is an agent's reference;</li>
 %% <li>the agent liveness iff `_Arg' is atom `alive'.</li>
