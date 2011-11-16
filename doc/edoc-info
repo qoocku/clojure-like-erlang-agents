@@ -1,0 +1,3 @@
+{application,agents}.
+{packages,[]}.
+{modules,[agent,agent_proc,agent_ref,agent_srv,agent_value_watch]}.

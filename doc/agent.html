@@ -1,0 +1,251 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>Module agent</title>
+<link rel="stylesheet" type="text/css" href="stylesheet.css" title="EDoc">
+</head>
+<body bgcolor="white">
+<div class="navbar"><a name="#navbar_top"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<hr>
+
+<h1>Module agent</h1>
+<ul class="index"><li><a href="#types">Data Types</a></li><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>
+
+
+<h2><a name="types">Data Types</a></h2>
+
+<h3 class="typedecl"><a name="type-agent_fun">agent_fun()</a></h3>
+<p><tt>agent_fun() = fun((pid(), any()) -&gt; <a href="#type-callback_result">callback_result()</a>)</tt></p>
+<p>  The type of agent's operational function.</p>
+
+<h3 class="typedecl"><a name="type-agent_ref">agent_ref()</a></h3>
+<p><b>abstract datatype</b>: <tt>agent_ref()</tt></p>
+<p>  The type of agent's reference.</p>
+
+<h3 class="typedecl"><a name="type-callback_result">callback_result()</a></h3>
+<p><tt>callback_result() = {ok, any()} | {ok, any(), timeout()}</tt></p>
+<p>  The result of <code>agent_ref()</code> function.</p>
+
+<h3 class="typedecl"><a name="type-property">property()</a></h3>
+<p><tt>property() = validation | timeout | state</tt></p>
+<p>  The type of agent's property.</p>
+
+<h3 class="typedecl"><a name="type-property_value">property_value()</a></h3>
+<p><tt>property_value() = <a href="#type-validation_fun">validation_fun()</a> | <a href="#type-timeout_fun">timeout_fun()</a> | any()</tt></p>
+<p>  The type of agent's property value.</p>
+
+<h3 class="typedecl"><a name="type-timeout_fun">timeout_fun()</a></h3>
+<p><tt>timeout_fun() = <a href="#type-agent_fun">agent_fun()</a></tt></p>
+<p>  The type of agent's timeout function.</p>
+
+<h3 class="typedecl"><a name="type-validation_fun">validation_fun()</a></h3>
+<p><tt>validation_fun() = fun((any()) -&gt; boolean())</tt></p>
+<p>  The type of agent's validation function.</p>
+
+<h3 class="typedecl"><a name="type-watch_fun">watch_fun()</a></h3>
+<p><tt>watch_fun() = fun((<a href="#type-agent_ref">agent_ref()</a>, any(), any()) -&gt; any())</tt></p>
+<p>  The type of agent's watching function.</p>
+
+<h2><a name="index">Function Index</a></h2>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#add_watch-2">add_watch/2</a></td><td>Binds to an agent a watching function.</td></tr>
+<tr><td valign="top"><a href="#get-2">get/2</a></td><td>Returns an agent property which may be:
+  <ul>
+  <li><code>validation</code> -- which stands for the agent's validation function;</li>
+  <li><code>timeout</code> -- which stands for the agent's timeout function;</li>
+  <li><code>state</code> -- which stands for the agent's state value.</li>
+  </ul>.</td></tr>
+<tr><td valign="top"><a href="#is-2">is/2</a></td><td>Tests for:
+  <ul>
+  <li>the equality of agent references iff <code>_Arg</code> is an agent's reference;</li>
+  <li>the agent liveness iff <code>_Arg</code> is atom <code>alive</code>.</li>
+  </ul>.</td></tr>
+<tr><td valign="top"><a href="#pid-1">pid/1</a></td><td>Returns the agent process <em>pid</em>.</td></tr>
+<tr><td valign="top"><a href="#send-2">send/2</a></td><td>Sends to an agent a function to be evaluated asynchronously.</td></tr>
+<tr><td valign="top"><a href="#send_off-2">send_off/2</a></td><td>Sends to an agent a function to be evaluated asynchronously in a separate process.</td></tr>
+<tr><td valign="top"><a href="#set-3">set/3</a></td><td>Sets an agent property which may be:
+  <ul>
+  <li><code>validation</code> -- which stands for the agent's validation function;</li>
+  <li><code>timeout</code> -- which stands for the agent's timeout function;</li>
+  </ul>.</td></tr>
+<tr><td valign="top"><a href="#start-1">start/1</a></td><td>Starts unsupervised agent with the <code>InitialState</code> as initial value.</td></tr>
+<tr><td valign="top"><a href="#start-3">start/3</a></td><td>Start unsupervised agent with the <code>InitialState</code> as initial value, validation
+  function set to <code>VFun</code> and timeout function set to <code>TFun</code>.</td></tr>
+<tr><td valign="top"><a href="#start_link-1">start_link/1</a></td><td>Starts an agent to be supervised with initial state set to <code>InitialState</code> value.</td></tr>
+<tr><td valign="top"><a href="#start_link-3">start_link/3</a></td><td>Starts an agent to be supervised with the <code>InitialState</code> as initial value, validation
+  function set to <code>VFun</code> and timeout function set to <code>TFun</code>.</td></tr>
+<tr><td valign="top"><a href="#start_link_ref-1">start_link_ref/1</a></td><td>Starts an agent to be supervised with initial state set to <code>InitialState</code> value.</td></tr>
+<tr><td valign="top"><a href="#start_link_ref-3">start_link_ref/3</a></td><td>Starts an agent to be supervised with the <code>InitialState</code> as initial value, validation
+  function set to <code>VFun</code> and timeout function set to <code>TFun</code>.</td></tr>
+<tr><td valign="top"><a href="#start_ref-1">start_ref/1</a></td><td>Starts unsupervised agent with the <code>InitialState</code> as initial value.</td></tr>
+<tr><td valign="top"><a href="#start_ref-3">start_ref/3</a></td><td>Start unsupervised agent with the <code>InitialState</code> as initial value, validation
+  function set to <code>VFun</code> and timeout function set to <code>TFun</code>.</td></tr>
+<tr><td valign="top"><a href="#state-1">state/1</a></td><td>Returns an agent's state value.</td></tr>
+<tr><td valign="top"><a href="#stop-1">stop/1</a></td><td>Stops an agent asynchronously.</td></tr>
+<tr><td valign="top"><a href="#sync_stop-1">sync_stop/1</a></td><td>Stops an agent synchronously (the caller is blocked till the agent stops).</td></tr>
+</table>
+
+<h2><a name="functions">Function Details</a></h2>
+
+<h3 class="function"><a name="add_watch-2">add_watch/2</a></h3>
+<div class="spec">
+<p><tt>add_watch(Agent::<a href="#type-agent_ref">agent_ref()</a>, Fun::<a href="#type-watch_fun">watch_fun()</a>) -&gt; ok</tt><br></p>
+</div><p>Binds to an agent a watching function. The function will be evaluated
+  when the agent's state value has been set (i.e. <em>after</em> the validation
+  function has been evaluated and returns <code>true</code>).
+ </p>
+
+<h3 class="function"><a name="get-2">get/2</a></h3>
+<div class="spec">
+<p><tt>get(Agent::<a href="#type-agent_ref">agent_ref()</a>, Msg::<a href="#type-property">property()</a>) -&gt; {ok, <a href="#type-property_value">property_value()</a>}</tt><br></p>
+</div><p>Returns an agent property which may be:
+  <ul>
+  <li><code>validation</code> -- which stands for the agent's validation function;</li>
+  <li><code>timeout</code> -- which stands for the agent's timeout function;</li>
+  <li><code>state</code> -- which stands for the agent's state value.</li>
+  </ul>
+ </p>
+<p><b>See also:</b> <a href="#set-3">set/3</a>, <a href="#state-2">state/2</a>.</p>
+
+<h3 class="function"><a name="is-2">is/2</a></h3>
+<div class="spec">
+<p><tt>is(Agent::<a href="#type-agent_ref">agent_ref()</a>, Arg::<a href="#type-agent_ref">agent_ref()</a> | alive) -&gt; boolean()</tt><br></p>
+</div><p>Tests for:
+  <ul>
+  <li>the equality of agent references iff <code>_Arg</code> is an agent's reference;</li>
+  <li>the agent liveness iff <code>_Arg</code> is atom <code>alive</code>.</li>
+  </ul>
+ </p>
+
+<h3 class="function"><a name="pid-1">pid/1</a></h3>
+<div class="spec">
+<p><tt>pid(Agent::<a href="#type-agent_ref">agent_ref()</a>) -&gt; pid()</tt><br></p>
+</div><p>Returns the agent process <em>pid</em>.
+ </p>
+
+<h3 class="function"><a name="send-2">send/2</a></h3>
+<div class="spec">
+<p><tt>send(Agent::<a href="#type-agent_ref">agent_ref()</a>, Fun::<a href="#type-agent_fun">agent_fun()</a>) -&gt; ok</tt><br></p>
+</div><p>Sends to an agent a function to be evaluated asynchronously.
+  The function will be evaluated within the agent process.
+ </p>
+<p><b>See also:</b> <a href="send_off.html">send_off</a>.</p>
+
+<h3 class="function"><a name="send_off-2">send_off/2</a></h3>
+<div class="spec">
+<p><tt>send_off(Agent::<a href="#type-agent_ref">agent_ref()</a>, Fun::<a href="#type-agent_fun">agent_fun()</a>) -&gt; ok</tt><br></p>
+</div><p>Sends to an agent a function to be evaluated asynchronously in a separate process.
+ </p>
+<p><b>See also:</b> <a href="#send-2">send/2</a>.</p>
+
+<h3 class="function"><a name="set-3">set/3</a></h3>
+<div class="spec">
+<p><tt>set(Agent::<a href="#type-agent_ref">agent_ref()</a>, Property::<a href="#type-property">property()</a>, Value::<a href="#type-property_value">property_value()</a>) -&gt; ok</tt><br></p>
+</div><p>Sets an agent property which may be:
+  <ul>
+  <li><code>validation</code> -- which stands for the agent's validation function;</li>
+  <li><code>timeout</code> -- which stands for the agent's timeout function;</li>
+  </ul>
+ </p>
+<p><b>See also:</b> <a href="#get-2">get/2</a>.</p>
+
+<h3 class="function"><a name="start-1">start/1</a></h3>
+<div class="spec">
+<p><tt>start(InitialState::any()) -&gt; {ok, <a href="#type-agent_ref">agent_ref()</a>}</tt><br></p>
+</div><p>Starts unsupervised agent with the <code>InitialState</code> as initial value.
+  The validation and timeout functions are set to their defaults value (which
+  results in validation accepting any state value and timeout function doing nothing).
+ </p>
+<p><b>See also:</b> <a href="#start-3">start/3</a>, <a href="#start_link-1">start_link/1</a>.</p>
+
+<h3 class="function"><a name="start-3">start/3</a></h3>
+<div class="spec">
+<p><tt>start(InitialState::any(), VFun::<a href="#type-validation_fun">validation_fun()</a>, TFun::<a href="#type-timeout_fun">timeout_fun()</a>) -&gt; {ok, <a href="#type-agent_ref">agent_ref()</a>}</tt><br></p>
+</div><p>Start unsupervised agent with the <code>InitialState</code> as initial value, validation
+  function set to <code>VFun</code> and timeout function set to <code>TFun</code>. The result contains the
+  agent reference which currently is a <em>pid</em>.
+ </p>
+<p><b>See also:</b> <a href="#start-1">start/1</a>, <a href="#start_link-3">start_link/3</a>.</p>
+
+<h3 class="function"><a name="start_link-1">start_link/1</a></h3>
+<div class="spec">
+<p><tt>start_link(InitialState::any()) -&gt; {ok, <a href="#type-agent_ref">agent_ref()</a>}</tt><br></p>
+</div><p>Starts an agent to be supervised with initial state set to <code>InitialState</code> value.
+  The validation and timeout functions are set to their defaults value (which
+  results in validation accepting any state value and timeout function doing nothing).
+  The result is containes <em>opaque</em> agent's reference (do not confuse with <code>agent_ref:ref()</code>.
+ </p>
+<p><b>See also:</b> <a href="#start-1">start/1</a>, <a href="#start_link-3">start_link/3</a>.</p>
+
+<h3 class="function"><a name="start_link-3">start_link/3</a></h3>
+<div class="spec">
+<p><tt>start_link(InitialState::any(), VFun::<a href="#type-validation_fun">validation_fun()</a>, TFun::<a href="#type-timeout_fun">timeout_fun()</a>) -&gt; {ok, <a href="#type-agent_ref">agent_ref()</a>}</tt><br></p>
+</div><p>Starts an agent to be supervised with the <code>InitialState</code> as initial value, validation
+  function set to <code>VFun</code> and timeout function set to <code>TFun</code>.
+  The result contains the agent reference which currently is an <em>opaque</em> term
+  containing the agent process <em>pid</em>.
+ </p>
+<p><b>See also:</b> <a href="#start-3">start/3</a>, <a href="#start_link-1">start_link/1</a>.</p>
+
+<h3 class="function"><a name="start_link_ref-1">start_link_ref/1</a></h3>
+<div class="spec">
+<p><tt>start_link_ref(InitialState::any()) -&gt; {ok, <a href="#type-agent_ref">agent_ref()</a>}</tt><br></p>
+</div><p>Starts an agent to be supervised with initial state set to <code>InitialState</code> value.
+  The validation and timeout functions are set to their defaults value (which
+  results in validation accepting any state value and timeout function doing nothing).
+  The result is parametrized module instance <code>agent_ref[]</code>.
+ </p>
+<p><b>See also:</b> <a href="#start_link_ref-3">start_link_ref/3</a>, <a href="#start_ref-1">start_ref/1</a>, <a href="agent_ref.html#new-1">agent_ref:new/1</a>.</p>
+
+<h3 class="function"><a name="start_link_ref-3">start_link_ref/3</a></h3>
+<div class="spec">
+<p><tt>start_link_ref(InitialState::any(), VFun::<a href="#type-validation_fun">validation_fun()</a>, TFun::<a href="#type-timeout_fun">timeout_fun()</a>) -&gt; {ok, <a href="#type-agent_ref">agent_ref()</a>}</tt><br></p>
+</div><p>Starts an agent to be supervised with the <code>InitialState</code> as initial value, validation
+  function set to <code>VFun</code> and timeout function set to <code>TFun</code>.
+  The result is parametrized module instance <code>agent_ref[]</code>.
+ </p>
+<p><b>See also:</b> <a href="#start_link_ref-1">start_link_ref/1</a>, <a href="#start_ref-3">start_ref/3</a>, <a href="agent_ref.html#new-1">agent_ref:new/1</a>.</p>
+
+<h3 class="function"><a name="start_ref-1">start_ref/1</a></h3>
+<div class="spec">
+<p><tt>start_ref(InitialState::any()) -&gt; {ok, <a href="agent_ref.html#type-ref">agent_ref:ref()</a>}</tt><br></p>
+</div><p>Starts unsupervised agent with the <code>InitialState</code> as initial value.
+  The validation and timeout functions are set to their defaults value (which
+  results in validation accepting any state value and timeout function doing nothing).
+  The result is parametrized module instance <code>agent_ref[]</code>.
+ </p>
+<p><b>See also:</b> <a href="#start_link_ref-1">start_link_ref/1</a>, <a href="#start_ref-3">start_ref/3</a>, <a href="agent_ref.html#new-1">agent_ref:new/1</a>.</p>
+
+<h3 class="function"><a name="start_ref-3">start_ref/3</a></h3>
+<div class="spec">
+<p><tt>start_ref(InitialState::any(), VFun::<a href="#type-validation_fun">validation_fun()</a>, TFun::<a href="#type-timeout_fun">timeout_fun()</a>) -&gt; {ok, <a href="#type-agent_ref">agent_ref()</a>}</tt><br></p>
+</div><p>Start unsupervised agent with the <code>InitialState</code> as initial value, validation
+  function set to <code>VFun</code> and timeout function set to <code>TFun</code>.
+  The result is parametrized module instance <code>agent_ref[]</code>.
+ </p>
+<p><b>See also:</b> <a href="#start_link_ref-3">start_link_ref/3</a>, <a href="#start_ref-1">start_ref/1</a>, <a href="agent_ref.html#new-1">agent_ref:new/1</a>.</p>
+
+<h3 class="function"><a name="state-1">state/1</a></h3>
+<div class="spec">
+<p><tt>state(Agent::<a href="#type-agent_ref">agent_ref()</a>) -&gt; {ok, any()}</tt><br></p>
+</div><p>Equivalent to <a href="agent.html#get-2"><tt>agent:get(Agent, state)</tt></a>.</p>
+<p>Returns an agent's state value.</p>
+<p><b>See also:</b> <a href="#get-2">get/2</a>.</p>
+
+<h3 class="function"><a name="stop-1">stop/1</a></h3>
+<div class="spec">
+<p><tt>stop(Agent::<a href="#type-agent_ref">agent_ref()</a>) -&gt; ok</tt><br></p>
+</div><p>Stops an agent asynchronously.
+ </p>
+<p><b>See also:</b> <a href="#sync_stop-1">sync_stop/1</a>.</p>
+
+<h3 class="function"><a name="sync_stop-1">sync_stop/1</a></h3>
+<div class="spec">
+<p><tt>sync_stop(Agent::<a href="#type-agent_ref">agent_ref()</a>) -&gt; ok</tt><br></p>
+</div><p>Stops an agent synchronously (the caller is blocked till the agent stops).
+ </p>
+<hr>
+
+<div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<p><i>Generated by EDoc, Nov 16 2011, 16:44:24.</i></p>
+</body>
+</html>
