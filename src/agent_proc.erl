@@ -1,14 +1,27 @@
 %%%
 %%% @doc An implementation of agent process not to be supervised (OTP non-compliant).
+%%% @author Damian T. Dobroczy\\'nski
+%%% @since 2011-11-15
+%%% @headerfile "state.hrl"
 %%%
 -module (agent_proc).
+-author ("Damian T. Dobroczy\\\\'nski <qoocku@gmail.com>").
 -export ([start/1,
           send_off/3,
           init/1,
           loop/1]).
 
 -include ("state.hrl").
--include_lib ("eunit/include/eunit.hrl").
+
+-type state() :: #state{}. %% The internal agent process state.
+
+%%
+%% @doc Starts simple agent process.
+%% The arguments lsit must contain `State0' value and optionaly
+%% validation and timeout function.
+%% The agent has initial state value set to `State0'.
+%%
+-spec start ([any() | agent:validation_fun() | agent:timeout_fun()]) -> {ok, pid()}.
 
 start ([State0]) ->
   start([State0, fun (_) -> true end, fun (_, V) -> {ok, V} end]);
@@ -17,8 +30,18 @@ start ([State0, VFun, TFun]) ->
                                            vfun  = VFun,
                                            tfun  = TFun}])}.
 
+%% @private
+%% @doc Process initialisation.
+%% 
+-spec init (state()) -> no_return().
+
 init (State) ->
   loop(State).
+
+%% @private
+%% @doc Agent process main loop.
+%%
+-spec loop (stop | state()) -> no_return().
 
 loop (stop) ->
   ok;
@@ -69,9 +92,14 @@ loop (State = #state{value = Value,
          end,
   ?MODULE:loop(next(Next, State)).
 
-error_report (Context, E, R, Pid) ->
-  error_report(Context, E, R, Pid, []).
-
+%% @private
+%% @doc Logs error.
+%% Error `E' is logged with given `Context', reason `R', agent pid `Pid' and
+%% rest of report entries list in `Rest'.
+%%
+-spec error_report (validation | timeout | send | send_off,
+                    atom(), term(), pid(), list()) -> any().
+                       
 error_report (Context, E, R, Pid, Rest) ->
   error_logger:error_report([{module, ?MODULE},
                              {where, Context},
@@ -79,7 +107,18 @@ error_report (Context, E, R, Pid, Rest) ->
                              {self, self()},
                              {agent, Pid}] ++ Rest).
 
-
+%% @private
+%% @doc Evaluates agent function.
+%% If an exception is caught, the error is logged, and specific value is
+%% returned so that the agent stops it's loop.
+%%
+-spec eval (validation | timeout | send | send_off,
+            pid(), 
+            agent:validation_fun() |
+            agent:timeout_fun()    |
+            agent:agent_fun(),
+            any()) -> agent:callback_result() | boolean().
+               
 eval (validation, Pid, Fun, V) ->
   try Fun(V) of
       Value -> Value
@@ -99,7 +138,19 @@ eval (Context, Pid, Fun, V) ->
         _Other   -> stop
       end                      
   end.
-      
+  
+%% @private
+%% @doc Shifts the agent to the next state.
+%% The next state may be loop continuation with the new state value or
+%% exiting the message loop.
+%%
+-spec next (Change::(none | 
+                     stop | 
+                     {vfun, agent:validation_fun()} | 
+                     {tfun, agent:timeout_fun()}    |
+                     agent:callback_result()        |
+                     any()), state()) -> state() | stop.
+
 next (none, State) ->
   State;
 next (stop, _State) ->
@@ -129,9 +180,20 @@ next ({ok, NewValue, Timeout}, State = #state{value = V, vfun = VFun}) ->
 next (Other, _State) ->
   exit({invalid_state_shift_value, Other}).
 
+%% @hidden
+%% @doc The short-run "send-off" process body.
+%%
+-spec send_off (pid(), any(), agent:agent_fun()) -> any().
+
 send_off (Self, Value, Fun) ->
   Next = eval(send_off, Self, Fun, Value),
   Self ! {'$next', Next}.
+
+%% @hidden
+%% @doc Notfies the watching processes that the agent's state value has been set.
+%% Not necessairly changed.
+%%
+-spec notify_watchers (any(), any()) -> any().
 
 notify_watchers (OldVal, NewVal) ->
   {monitors, Monitors} = erlang:process_info(self(), monitors),
