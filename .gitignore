@@ -1,0 +1,6 @@
+*.beam
+refactorerl*
+*.defs
+*.dat
+data
+deps
