@@ -25,6 +25,7 @@
           state/1,
           send/2,
           send_off/2,
+          send_off/3,
           add_watch/2,
           % internal exports
           call/2,
@@ -42,6 +43,7 @@
 -type watch_fun      () :: fun ((agent_ref(), any(), any()) -> any()). %% The type of agent's watching function.
 -type property       () :: validation | timeout | state.               %% The type of agent's property.
 -type property_value () :: validation_fun() | timeout_fun() | any().   %% The type of agent's property value.
+-type value_vsn      () :: reference() | undefined.                    %% the type of agent's state value version.
 
 -export_types ([callback_result/0,
                 validation_fun/0,
@@ -49,7 +51,8 @@
                 timeout_fun/0,
                 agent_ref/0,
                 property/0,
-                property_value/0]).
+                property_value/0,
+                value_vsn/0]).
 
 %%% Start & Stop
 
@@ -291,13 +294,25 @@ send (Agent, Fun) ->
 
 %%
 %% @doc Sends to an agent a function to be evaluated asynchronously in a separate process.
-%% 
+%% No version control.
+%% @equiv send_off(Agent, Fun, false)
 %% @see send/2
-%%
+%% 
 -spec send_off (agent_ref(), agent_fun()) -> ok.
 
 send_off (Agent, Fun) ->
-  ?MODULE:cast(Agent, {send_off, Fun}).
+  send_off(Agent, Fun, false).
+
+%%
+%% @doc Sends to an agent a function to be evaluated asynchronously in a separate process.
+%% If `Versioned' is `true' the agent's value will be versioned.
+%% @equiv send_off(Agent, Fun, false)
+%% @see send/2
+%% 
+-spec send_off (agent_ref(), agent_fun(), boolean()) -> ok.
+
+send_off (Agent, Fun, Versioned) ->
+  ?MODULE:cast(Agent, {send_off, Fun, Versioned}).
 
 %%
 %% @doc Binds to an agent a watching function. The function will be evaluated
@@ -327,17 +342,9 @@ do_start (start, Arg) ->
 %% @private
 -spec cast (agent_ref(), agent_fun()) -> ok.
 
-cast ({gen, Agent}, {What, Fun}) when is_pid(Agent) andalso 
-                                      is_function(Fun) andalso 
-                                      (What =:= send orelse 
-                                       What =:= send_off orelse
-                                       What =:= add_watch) ->
-  gen_server:cast(Agent, {What, Fun});
-cast (Agent, Msg = {What, Fun}) when is_pid(Agent) andalso 
-                                     is_function(Fun) andalso 
-                                     (What =:= send orelse
-                                      What =:= send_off orelse
-                                      What =:= add_watch) ->
+cast ({gen, Agent}, Msg) ->
+  gen_server:cast(Agent, Msg);
+cast (Agent, Msg) ->
   Agent ! Msg,
   ok.
 

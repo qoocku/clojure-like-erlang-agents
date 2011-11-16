@@ -71,7 +71,7 @@ pid () ->
 -spec is (agent:agent_ref() | ref() | alive) -> boolean().
 
 is (_AgentOrProperty = {?MODULE, Agent0}) ->
-  agent:is(Agent, AgentOrProperty);
+  agent:is(Agent, Agent0);
 is (AgentOrProperty) ->
   agent:is(Agent, AgentOrProperty).
 
