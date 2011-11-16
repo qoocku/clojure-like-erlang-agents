@@ -22,7 +22,7 @@
 
 -type state() :: #state{}.
 -opaque ref() :: {gen, pid()}. %% The implementation process reference type.
--export_types ([ref/0]).
+-export_type ([ref/0]).
 
 -define (REF(Pid), {gen, Pid}).
 -define (SELF, ?REF(self())).
@@ -71,7 +71,8 @@ handle_call (shutdown, From, State) ->
                   {timeout, agent:timeout_fun()}      |
                   {send, agent:agent_fun()}           |
                   {send_off, agent:agent_fun()}, state()) -> {noreply, state()} | 
-                                                             {stop, normal | {invalid_state_value, any()}}.
+                                                             {noreply, state(), timeout()} |
+                                                             {stop, normal | {invalid_state_value, any()}, state()}.
                                     
 handle_cast ({add_watch, Fun}, State) ->
   Pid = agent_value_watch:new({gen, self()}, Fun),
@@ -98,7 +99,9 @@ handle_cast ({send_off, Fun, Versioned}, State) ->
 %% See {@std_doc gen_server.html#Module:handle_info-2 gen_server `handle_info' callback}
 %% 
 -spec handle_info ({'DOWN', any(), process, pid(), any()} |
-                   timeout, state()) -> {noreply, state()} | {stop, {invalid_state_value, any()}, state()}.
+                   timeout, state()) -> {noreply, state()} | 
+                                        {noreply, state(), timeout()} |
+                                        {stop, {invalid_state_value, any()}, state()}.
 
 handle_info ({'DOWN', _, process, Pid, Info}, State) ->
   error_logger:error_report([{?MODULE, monitor_message},
@@ -133,7 +136,8 @@ code_change (_OldVsn, State, _Extra) ->
 %% @hidden 
 -spec next (agent:callback_result(),
             state()) -> {noreply, state()} |
-                        {stop, {invalid_state_value, any()}}.
+                        {noreply, state(), timeout()} |
+                        {stop, {invalid_state_value, any()}, state()}.
 
 next (Next, State) ->
   next(Next, State, undefined).
@@ -143,8 +147,9 @@ next (Next, State) ->
 %% @hidden
 -spec next (agent:callback_result(),
             state(),
-            agent:value_vsn()) -> {noreply, state()} |
-                                  {stop, {invalid_state_value, any()}}.
+            {agent:value_vsn(), agent:agent_fun()} | undefined) -> {noreply, state()} |
+                                                                   {noreply, state(), timeout()} |
+                                                                   {stop, {invalid_state_value, any()}, state()}.
 
 next (Next, State, undefined) -> %% ignore the version
   next_aux(Next, State);
@@ -159,6 +164,8 @@ next (_Next, State, {_, OffFun}) -> %% change in version
   send_off(OffFun, State, true).
 
 %% @hidden
+-spec next_aux (agent:callback_result(), state()) -> {noreply, state(), timeout()} |
+                                                     {stop, {invalid_state_value, any()}, state()}.
 
 next_aux (Next, State = #state{value =V, vfun = Fun}) ->
   {ok, NV, Timeout} = case Next of

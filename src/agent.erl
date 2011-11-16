@@ -45,14 +45,15 @@
 -type property_value () :: validation_fun() | timeout_fun() | any().   %% The type of agent's property value.
 -type value_vsn      () :: reference() | undefined.                    %% the type of agent's state value version.
 
--export_types ([callback_result/0,
-                validation_fun/0,
-                agent_fun/0,
-                timeout_fun/0,
-                agent_ref/0,
-                property/0,
-                property_value/0,
-                value_vsn/0]).
+-export_type ([callback_result/0,
+               validation_fun/0,
+               agent_fun/0,
+               timeout_fun/0,
+               watch_fun/0,
+               agent_ref/0,
+               property/0,
+               property_value/0,
+               value_vsn/0]).
 
 %%% Start & Stop
 
@@ -294,14 +295,14 @@ send (Agent, Fun) ->
 
 %%
 %% @doc Sends to an agent a function to be evaluated asynchronously in a separate process.
-%% No version control.
-%% @equiv send_off(Agent, Fun, false)
+%% Version control.
+%% @equiv send_off(Agent, Fun, true)
 %% @see send/2
 %% 
 -spec send_off (agent_ref(), agent_fun()) -> ok.
 
 send_off (Agent, Fun) ->
-  send_off(Agent, Fun, false).
+  send_off(Agent, Fun, true).
 
 %%
 %% @doc Sends to an agent a function to be evaluated asynchronously in a separate process.

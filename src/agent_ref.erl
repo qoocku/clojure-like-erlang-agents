@@ -17,7 +17,7 @@
           add_watch/1]).
 
 -type ref () :: {?MODULE, agent:agent_ref()}. %% Type of this module instance.
--export_types ([ref/0]).
+-export_type ([ref/0]).
 
 %%
 %% @doc Creates a new instance of this module.
