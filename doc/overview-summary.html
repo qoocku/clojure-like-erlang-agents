@@ -7,9 +7,102 @@
 <body bgcolor="white">
 <div class="navbar"><a name="#navbar_top"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
 <h1>The agents application</h1>
-TODO
+<p>This is rather experimental Erlang application introducing Clojure-style agent in Erlang.</p>
+
+<p>The Clojure-like agents are simple processes/threads that holds it's state. They handles no messages like Erlang 
+processes. The following is a list of things you may want to do with such agents:</p>
+
+<ul>
+        <li><p>You may make them to evaluate a function against it's state. Let's call this <em>sending</em> a function to            
+the agent so that the agent can evaluate it within it's own process:</p>
+
+            <pre>
+            %% let's say <code>Agt</code> is an agent reference. It's state value
+            %% is an integer. You want to increase it.
+
+            agent:send(Agt, fun (A, V) -&gt; {ok, V+1} end).
+            </pre>
+            </li>
+
+        <li><p>You may evaluate a function against an agent state in separate, short-term process. Let's call this <em>sending</em> a function 
+            <em>off</em> the agent:</p>
+
+            <pre>
+            agent:send_off(Agt, fun (A, V) -&gt; {ok, V+1} end).
+            </pre>
+            The new state would be "sent" back to the agent (using common Erlang message). Note, that no version control is hold
+            on the value ;). But it could be, we'll see.</li>
+
+        <li><p>You may ask an agent for it's state value. This is different than Clojure implementation since Clojure's agents            
+state is directly accessed:</p>
+
+            <pre>
+            StateValue = agent:state(Agt).
+            </pre></li>
+
+        <li><p>You may start watching how the agent's state value is changing:</p>
+
+            <pre>
+            Watcher = fun (A, OldValue, NewValue) -&gt;
+                        io:format("Agent ~p changed it's value from ~p to ~p~n", [A, OldValue, NewValue])
+                      end,
+            agent:add_watch(Agent, Watcher)
+            </pre>
+            Now, if you send a function to the agent <code>Agent</code> the <code>Watcher</code> will be evaluated after the agent state value 
+            has been set and you may expect a nice info on your display.</li>
+</ul>
+
+<h4><a name="Implementation_details">Implementation details</a></h4>
+
+There are two implementations of the agent process:
+<ul>
+<li> OTP-compatible which uses <code>gen_server</code> (<a href="/home/damian/src/agents/doc/agent_srv.html">agent_srv</a> module)</li>
+<li> "raw" using simple loop-based process (<a href="/home/damian/src/agents/doc/agent_proc.html">agent_proc</a> module)</li>
+</ul><p>
+The first type of agent is started with <a href="/home/damian/src/agents/doc/agent.html#start-1">agent:start/1</a> and <a href="/home/damian/src/agents/doc/agent.html#start-3">agent:start/3</a> function,
+the latter with <a href="/home/damian/src/agents/doc/agent.html#start_link-1">agent:start_link/1</a> and <a href="/home/damian/src/agents/doc/agent.html#start_link-3">agent:start_link/3</a>.</p>
+
+<p><a href="/home/damian/src/agents/doc/agent.html#send-2">agent:send/2</a> function uses Erlang message passing to transport given function to an agent. As it's been mentioned before,
+<a href="/home/damian/src/agents/doc/agent.html#send_off-2">agent:send_off/2</a> makes an agent process to create a separate process and send to it message containing funcion to be evaluated with the agent
+reference and the state value.</p>
+
+<p>The "watchers" are implemented as separate long-run processes (non-OTP compatible, unsupervised) being monitored by an agent and monitoring the agent process. No ETS tables or such
+are used to keep the list of living "watchers". The implementation uses <a href="http://www.erlang.org/doc/man/erlang.html#process_info-2" target="_top">erlang:process_info(Pid, monitors)</a> to
+obtain the set of living "watchers".</p>
+ 
+<h4><a name="Agent's_functions">Agent's functions</a></h4>
+
+The functions sent to/off an agent accepts two arguments. First is the agent reference, the second is it's state value.
+It should return a tuple containing two or three element:
+<ul>
+<li> <code>{ok, NewValue::any()}</code> to make the agent change it's state value to <code>NewValue</code>, or</li>
+<li> <code>{ok, NewValue::any(), Timeout::timeout()}</code> to make the agent change it's state value to <code>NewValue</code> <strong>and</strong>
+     fire an internal timer which after <code>Timeout</code> milliseconds send <code>timeout</code> message to the agent, which in turn will evaluate
+     "timeout" function. The "timeout" function signature is the same as ordinary agent function. </li>
+</ul>
+All new state values are validated with "validation" function, which accepts new state value and return boolean, like this:
+<pre>
+   fun (NewStateValue) -&gt; 
+     NewStateValue =/= 0
+   end
+</pre><p>
+Both functions, "timeout" and "validation", may be set or get with <a href="/home/damian/src/agents/doc/agent.html#set-3">agent:set/3</a> and 
+<a href="/home/damian/src/agents/doc/agent.html#get-2">agent:get/2</a> functions.</p>
+
+<h4><a name="Toys">Toys</a></h4>
+
+There is one toy in this package (not counting this application as a joke). This is <a href="/home/damian/src/agents/doc/agent_ref.html">agent_ref</a> module, which is
+an abstract (parameterized) module just because I can. It allows to use <code>Agent:send(...)</code> notation. I saves typing. I cannot see other
+reasons to use this module. You may start tinkering with this typing:
+<pre>
+Agent = agent:start_ref(0),
+Agent:send(fun (_, V) -&gt; {ok, V+1} end).
+</pre><p>
+(the OTP equivalent is <a href="/home/damian/src/agents/doc/agent.html#start_link_ref-1">agent:start_link_ref/1,3</a>) and three-argument versions.</p>
+
+(to be continued...)
 <hr>
 <div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
-<p><i>Generated by EDoc, Nov 16 2011, 16:44:24.</i></p>
+<p><i>Generated by EDoc, Nov 16 2011, 19:32:06.</i></p>
 </body>
 </html>
