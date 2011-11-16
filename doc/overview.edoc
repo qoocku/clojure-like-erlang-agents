@@ -1,1 +1,94 @@
-@doc TODO
+@doc This is rather experimental Erlang application introducing Clojure-style agent in Erlang.
+
+The Clojure-like agents are simple processes/threads that holds it's state. They handles no messages like Erlang 
+processes. The following is a list of things you may want to do with such agents:
+
+<ul>
+        <li>You may make them to evaluate a function against it's state. Let's call this <em>sending</em> a function to
+            the agent so that the agent can evaluate it within it's own process:
+
+            <pre>
+            %% let's say `Agt' is an agent reference. It's state value
+            %% is an integer. You want to increase it.
+
+            agent:send(Agt, fun (A, V) -> {ok, V+1} end).
+            </pre>
+            </li>
+
+        <li>You may evaluate a function against an agent state in separate, short-term process. Let's call this <em>sending</em> a function 
+            <em>off</em> the agent:
+
+            <pre>
+            agent:send_off(Agt, fun (A, V) -> {ok, V+1} end).
+            </pre>
+            The new state would be "sent" back to the agent (using common Erlang message). Note, that no version control is hold
+            on the value ;). But it could be, we'll see.</li>
+
+        <li>You may ask an agent for it's state value. This is different than Clojure implementation since Clojure's agents
+            state is directly accessed:
+
+            <pre>
+            StateValue = agent:state(Agt).
+            </pre></li>
+
+        <li>You may start watching how the agent's state value is changing:
+
+            <pre>
+            Watcher = fun (A, OldValue, NewValue) ->
+                        io:format("Agent ~p changed it's value from ~p to ~p~n", [A, OldValue, NewValue])
+                      end,
+            agent:add_watch(Agent, Watcher)
+            </pre>
+            Now, if you send a function to the agent `Agent' the `Watcher' will be evaluated after the agent state value 
+            has been set and you may expect a nice info on your display.</li>
+</ul>
+
+=== Implementation details ===
+
+There are two implementations of the agent process:
+<ul>
+<li> OTP-compatible which uses `gen_server' ({@link //agents/agent_srv. agent_srv} module)</li>
+<li> "raw" using simple loop-based process ({@link //agents/agent_proc. agent_proc} module)</li>
+</ul>
+The first type of agent is started with {@link //agents/agent:start/1. agent:start/1} and {@link //agents/agent:start/3. agent:start/3} function,
+the latter with {@link //agents/agent:start_link/1. agent:start_link/1} and {@link //agents/agent:start_link/3. agent:start_link/3}.
+
+{@link //agents/agent:send/2. agent:send/2} function uses Erlang message passing to transport given function to an agent. As it's been mentioned before,
+{@link //agents/agent:send_off/2. agent:send_off/2} makes an agent process to create a separate process and send to it message containing funcion to be evaluated with the agent
+reference and the state value.
+
+The "watchers" are implemented as separate long-run processes (non-OTP compatible, unsupervised) being monitored by an agent and monitoring the agent process. No ETS tables or such
+are used to keep the list of living "watchers". The implementation uses [http://www.erlang.org/doc/man/erlang.html#process_info-2 erlang:process_info(Pid, monitors)] to
+obtain the set of living "watchers".
+ 
+=== Agent's functions ===
+
+The functions sent to/off an agent accepts two arguments. First is the agent reference, the second is it's state value.
+It should return a tuple containing two or three element:
+<ul>
+<li> `{ok, NewValue::any()}' to make the agent change it's state value to `NewValue', or</li>
+<li> `{ok, NewValue::any(), Timeout::timeout()}' to make the agent change it's state value to `NewValue' <strong>and</strong>
+     fire an internal timer which after `Timeout' milliseconds send `timeout' message to the agent, which in turn will evaluate
+     "timeout" function. The "timeout" function signature is the same as ordinary agent function. </li>
+</ul>
+All new state values are validated with "validation" function, which accepts new state value and return boolean, like this:
+<pre>
+   fun (NewStateValue) -> 
+     NewStateValue =/= 0
+   end
+</pre>
+Both functions, "timeout" and "validation", may be set or get with {@link //agents/agent:set/3. agent:set/3} and 
+{@link //agents/agent:get/2. agent:get/2} functions.
+
+=== Toys ===
+
+There is one toy in this package (not counting this application as a joke). This is {@link //agents/agent_ref. agent_ref} module, which is
+an abstract (parameterized) module just because I can. It allows to use `Agent:send(...)' notation. I saves typing. I cannot see other
+reasons to use this module. You may start tinkering with this typing:
+<pre>
+Agent = agent:start_ref(0),
+Agent:send(fun (_, V) -> {ok, V+1} end).
+</pre>
+(the OTP equivalent is {@link //agents/agent:start_link_ref/1. agent:start_link_ref/1,3}) and three-argument versions.
+
+(to be continued...)
