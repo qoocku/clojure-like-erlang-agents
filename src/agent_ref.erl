@@ -14,6 +14,7 @@
           is/1,
           send/1,
           send_off/1,
+          send_off/2,
           add_watch/1]).
 
 -type ref () :: {?MODULE, agent:agent_ref()}. %% Type of this module instance.
@@ -92,6 +93,15 @@ send (Fun) ->
 
 send_off (Fun) ->
   agent:send_off(Agent, Fun).
+
+%%
+%% @doc Sends a function off an agent.
+%% @equiv agent:send_off(Agent, Fun, Versioned)
+%%
+-spec send_off (agent:agent_fun(), boolean()) -> ok.
+
+send_off (Fun, Versioned) ->
+  agent:send_off(Agent, Fun, Versioned).
 
 %%
 %% @doc Adds a watching function to an agent.
