@@ -1,0 +1,8 @@
+#!/usr/bin/make -f
+### checks if the mixed-in modules must be recompiled
+MIXED = test/agent_otp_tests.erl test/agent_proc_tests.erl
+
+all: $(MIXED)
+
+test/%_tests.erl : test/agent_process_test_suit.erl
+	touch $@

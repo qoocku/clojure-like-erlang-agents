@@ -30,22 +30,8 @@ all_tests (Type, Mod) ->
    fun (Ctx) -> Mod:cleanup_suit(Ctx) end,
    [fun (Ctx) -> 
         {timeout, 12000, {atom_to_list(Fun), fun () -> Mod:Fun(Ctx) end}} 
-    end || Fun <- [
-                   test_start,
-                   test_sync_stop,
-                   test_getting_state,
-                   test_getting_validation,
-                   test_getting_timeout,
-                   test_setting_validation,
-                   test_setting_timeout,
-                   test_successful_validation,
-                   test_unsuccessful_validation,
-                   test_timeout,
-                   test_send_off,
-                   test_send,
-                   test_watch,
-                   test_agent_ref
-                  ]]}.
+    end || Fun <- [F || {F, _A} <- Mod:module_info(exports),
+                   string:str(atom_to_list(F), "test_") =:= 1]]}.
 
 
 test_start ({gen, Agent}) ->
@@ -195,6 +181,27 @@ test_watch (Agent) ->
               false
           end).
 
+test_watch_when_the_value_not_changed (Agent) ->
+  ?debugMsg("This test will take about 2 secs...~n"),
+  test_start(Agent),
+  Self  = self(),
+  Watch = fun (A, Old, New) ->
+              Self ! {test, A =:= Agent andalso Old =/= New}
+          end,
+  agent:add_watch(Agent, Watch),
+  Fun = fun (_, V) -> {ok, V} end,
+  agent:send(Agent, Fun),
+  ?assert(receive
+            {test, Smth} when is_boolean(Smth) ->
+              false;
+            _Other ->
+              ?debugMsg("Something wrong with the watch function!\n"),
+              false
+          after
+            2000 ->
+              true
+          end).
+  
 test_agent_ref (Agent) ->
   Pid = case Agent of {gen, A0} -> A0; A0 -> A0 end,
   Self = self(),

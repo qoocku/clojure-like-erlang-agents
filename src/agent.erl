@@ -317,8 +317,9 @@ send_off (Agent, Fun, Versioned) ->
 
 %%
 %% @doc Binds to an agent a watching function. The function will be evaluated
-%% when the agent's state value has been set (i.e. <em>after</em> the validation
-%% function has been evaluated and returns `true').
+%% when the agent's state value has been changed (i.e. <em>after</em> the validation
+%% function has been evaluated and returns `true' and the new value is not the same
+%% as the old one).
 %%
 -spec add_watch (agent_ref(), watch_fun()) -> ok.
 

@@ -174,7 +174,7 @@ next_aux (Next, State = #state{value =V, vfun = Fun}) ->
                       end,
   case Fun(NV) of
     true ->
-      notify_watchers(V, NV),
+      agent_value_watch:notify_watchers(?SELF, V, NV),
       {noreply, State#state{value = NV, vsn = erlang:make_ref()}, Timeout};
     false ->
       {stop, {invalid_state_value, NV}, State}
@@ -198,15 +198,3 @@ send_off (Fun,
                                                               end, Fun})
                     end),
   {noreply, State}.
-
-%% @private
-%% @doc Notify agent's watchers that the state value has been set.
-%% @see agent_proc:notify_watchers/2
-
--spec notify_watchers (any(), any()) -> any().
-
-notify_watchers (OldVal, NewVal) ->
-  {monitors, Monitors} = erlang:process_info(self(), monitors),
-  lists:foreach(fun ({process, Watcher}) ->
-                    Watcher ! {'agent-value', ?SELF, OldVal, NewVal}
-                end, Monitors).

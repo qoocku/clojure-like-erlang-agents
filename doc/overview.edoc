@@ -41,7 +41,8 @@ processes. The following is a list of things you may want to do with such agents
             agent:add_watch(Agent, Watcher)
             </pre>
             Now, if you send a function to the agent `Agent' the `Watcher' will be evaluated after the agent state value 
-            has been set and you may expect a nice info on your display.</li>
+            has been changed and you may expect a nice info on your display. The watching function <strong>is not</strong>
+            evaluated when the state value has not changed.</li>
 </ul>
 
 === Implementation details ===

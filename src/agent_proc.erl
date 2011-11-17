@@ -12,6 +12,7 @@
           loop/1]).
 
 -include ("state.hrl").
+-include_lib ("eunit/include/eunit.hrl").
 
 -type state() :: #state{}. %% The internal agent process state.
 
@@ -82,7 +83,7 @@ loop (State = #state{value = Value,
              {vfun, Fun};
            {timeout, Fun} when is_function(Fun) ->
              {tfun, Fun};
-           timeout ->
+           timeout ->            
              eval(timeout, Self, TFun, Value, Vsn);
            {send, Fun} when is_function(Fun) ->
              eval(send, Self, Fun, Value, Vsn);
@@ -164,29 +165,29 @@ next (none, State) ->
 next (stop, _State) ->
   stop;
 next ({vfun, Fun}, State = #state{value = V}) ->
-  S1 = next({ok, V}, State),
+  S1 = shift_state({ok, V, infinity}, State),
   S1#state{vfun = Fun};
 next ({tfun, Fun}, State) ->
   State#state{tfun = Fun};
-next ({ok, NewValue}, State = #state{value = V, vfun = VFun, vsn = Vsn}) ->
+next ({ok, NewValue}, State) ->
+  shift_state({ok, NewValue, infinity}, State);
+next (Next, State) ->
+  shift_state(Next, State).
+
+%% @hidden
+%%
+-spec shift_state ({ok, any(), timeout()}, state()) -> state().
+
+shift_state ({ok, NewValue, Timeout}, State = #state{value = V, vfun = VFun, vsn = Vsn}) ->
   case eval(validation, self(), VFun, NewValue, Vsn) of
-    true ->
-      notify_watchers(V, NewValue),
-      State#state{value = NewValue, vsn = erlang:make_ref()};
-    false ->
-      exit({invalid_state_value, NewValue})
-  end;
-next ({ok, NewValue, Timeout}, State = #state{value = V, vfun = VFun, vsn = Vsn}) ->
-  case eval(validation, self(), VFun, NewValue, Vsn) of
-    true ->
-      erlang:send_after(Timeout, self(), timeout),
-      notify_watchers(V, NewValue),
-      State#state{value = NewValue, vsn = erlang:make_ref()};
-    false ->
-      exit({invalid_state_value, NewValue})
-  end;
-next (Other, _State) ->
-  exit({invalid_state_shift_value, Other}).
+    true   -> agent_value_watch:notify_watchers(self(), V, NewValue);
+    false  -> exit({invalid_state_value, NewValue})
+  end,
+  case Timeout of
+    infinity -> ok;
+    Timeout  -> erlang:send_after(Timeout, self(), timeout)
+  end,
+  State#state{value = NewValue, vsn = erlang:make_ref()}.
 
 %% @hidden
 %% @doc The short-run "send-off" process body.
@@ -202,15 +203,3 @@ send_off (Self, Vsn, Value, Fun) ->
 spawn_send_off (Vsn, Value, Fun) ->
   Self = self(),
   erlang:spawn(?MODULE, send_off, [Self, Vsn, Value, Fun]).
-
-%% @hidden
-%% @doc Notfies the watching processes that the agent's state value has been set.
-%% Not necessairly changed.
-%%
--spec notify_watchers (any(), any()) -> any().
-
-notify_watchers (OldVal, NewVal) ->
-  {monitors, Monitors} = erlang:process_info(self(), monitors),
-  lists:foreach(fun ({process, Watcher}) ->
-                    Watcher ! {'agent-value', self(), OldVal, NewVal}
-                end, Monitors).

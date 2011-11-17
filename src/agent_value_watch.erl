@@ -7,7 +7,8 @@
 -author ("Damian T. Dobroczy\\\\'nski <qoocku@gmail.com>").
 -export ([new/2,
           init/2,
-          loop/2]).
+          loop/2,
+          notify_watchers/3]).
 
 %%
 %% @doc Creates watcher process.
@@ -16,6 +17,20 @@
 
 new (Agent, Fun) ->
   erlang:spawn(?MODULE, init, [Agent, Fun]).
+
+%% 
+%% @doc Notify agent's watchers that the state value has been changed.
+%% The function is evaluated in agent's process space.
+%%
+-spec notify_watchers (agent:agent_ref(), any(), any()) -> any().
+
+notify_watchers (_, TheSame, TheSame) ->
+  ok;
+notify_watchers (Agent, OldVal, NewVal) ->
+  {monitors, Monitors} = erlang:process_info(self(), monitors),
+  lists:foreach(fun ({process, Watcher}) ->
+                    Watcher ! {'agent-value', Agent, OldVal, NewVal}
+                end, Monitors).
 
 %% @private
 %% @doc Initialises the watcher process.
@@ -30,7 +45,9 @@ init (Agent, Fun) ->
 %% @private
 %% @doc The watcher process main message loop.
 %% It's capable of receiving two messages: <code>{'DOWN', _, process, AgentPid, _}</code>
-%% and <code>{'agent-value', agent:agent_ref(), OldValue, NewValue}</code>.
+%% and <code>{'agent-value', agent:agent_ref(), OldValue, NewValue}</code>. If the evaluation
+%% raises an exception of any kind the process exits sending an error report to the 
+%% {@std_doc error_logger.html#error_report-1 error_logger}.
 %%
 -spec loop (agent:agent_ref(), agent:watch_fun()) -> none().
 
