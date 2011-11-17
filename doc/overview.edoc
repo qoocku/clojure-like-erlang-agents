@@ -4,7 +4,8 @@ The Clojure-like agents are simple processes/threads that holds it's state. They
 processes. The following is a list of things you may want to do with such agents:
 
 <ul>
-        <li>You may make them to evaluate a function against it's state. Let's call this <em>sending</em> a function to
+        <li>You may make them to evaluate a function against it's state. Let's call this 
+            <em>{@link agent:send/2. sending}</em> a function to
             the agent so that the agent can evaluate it within it's own process:
 
             <pre>
@@ -15,14 +16,14 @@ processes. The following is a list of things you may want to do with such agents
             </pre>
             </li>
 
-        <li>You may evaluate a function against an agent state in separate, short-term process. Let's call this <em>sending</em> a function 
-            <em>off</em> the agent:
+        <li>You may evaluate a function against an agent state in separate, short-run process. Let's call this <em>sending</em> a function 
+            <em>{@link agent:send_off/2. off}</em> the agent:
 
             <pre>
             agent:send_off(Agt, fun (A, V) -> {ok, V+1} end).
             </pre>
-            The new state would be "sent" back to the agent (using common Erlang message). Note, that no version control is hold
-            on the value ;). But it could be, we'll see.</li>
+            The new state would be "sent" back to the agent (using common Erlang message). By default, a versioning control is used.
+            If the updated agent's state value is older than the current value the function evaluation is respawned again.</li>
 
         <li>You may ask an agent for it's state value. This is different than Clojure implementation since Clojure's agents
             state is directly accessed:
@@ -54,8 +55,9 @@ The first type of agent is started with {@link //agents/agent:start/1. agent:sta
 the latter with {@link //agents/agent:start_link/1. agent:start_link/1} and {@link //agents/agent:start_link/3. agent:start_link/3}.
 
 {@link //agents/agent:send/2. agent:send/2} function uses Erlang message passing to transport given function to an agent. As it's been mentioned before,
-{@link //agents/agent:send_off/2. agent:send_off/2} makes an agent process to create a separate process and send to it message containing funcion to be evaluated with the agent
-reference and the state value.
+{@link //agents/agent:send_off/2. agent:send_off/2,3} makes an agent process to create a separate process and send to it message containing funcion to be evaluated with the agent
+reference and the state value. The versioned {@ link agent:send_off/3. agent:send_off(Agent, Fun [, true])} may ends up in several respawning separate evaluation process
+(possibly infinite number of times ;)) if there's a version conflict on update.
 
 The "watchers" are implemented as separate long-run processes (non-OTP compatible, unsupervised) being monitored by an agent and monitoring the agent process. No ETS tables or such
 are used to keep the list of living "watchers". The implementation uses [http://www.erlang.org/doc/man/erlang.html#process_info-2 erlang:process_info(Pid, monitors)] to
