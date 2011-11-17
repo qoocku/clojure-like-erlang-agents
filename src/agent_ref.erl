@@ -17,7 +17,7 @@
           add_watch/1]).
 
 -type ref () :: {?MODULE, agent:agent_ref()}. %% Type of this module instance.
--export_types ([ref/0]).
+-export_type ([ref/0]).
 
 %%
 %% @doc Creates a new instance of this module.
@@ -71,7 +71,7 @@ pid () ->
 -spec is (agent:agent_ref() | ref() | alive) -> boolean().
 
 is (_AgentOrProperty = {?MODULE, Agent0}) ->
-  agent:is(Agent, AgentOrProperty);
+  agent:is(Agent, Agent0);
 is (AgentOrProperty) ->
   agent:is(Agent, AgentOrProperty).
 

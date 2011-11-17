@@ -14,14 +14,15 @@
           handle_info/2,
           terminate/2,
           code_change/3,
-          send_off/2,
-          next/2]).
+          send_off/3,
+          next/2,
+          next/3]).
 
 -include ("state.hrl").
 
 -type state() :: #state{}.
 -opaque ref() :: {gen, pid()}. %% The implementation process reference type.
--export_types ([ref/0]).
+-export_type ([ref/0]).
 
 -define (REF(Pid), {gen, Pid}).
 -define (SELF, ?REF(self())).
@@ -35,7 +36,9 @@
 init ({Value0, VFun, TFun}) -> 
   {ok, #state{value = Value0,
               vfun  = VFun,
-              tfun  = TFun}}.
+              tfun  = TFun}};
+init (Value0) ->
+  init({Value0, fun (_) -> true end, fun (_,V) -> {ok, V} end}).
 
 %% @private
 %% @doc Handles implementation internal synchronous messages.
@@ -62,20 +65,23 @@ handle_call (shutdown, From, State) ->
 %% See {@std_doc gen_server.html#Module:handle_cast-2 gen_server `handle_cast' callback}
 %% 
 -spec handle_cast({add_watch, agent:watch_fun()}      |
-                  {'$next', agent:callback_result()}  |
+                  {'$next', agent:callback_result(), agent:value_vsn()}  |
                   shutdown                            |
                   {validation, agent:validation_fun()}|
                   {timeout, agent:timeout_fun()}      |
                   {send, agent:agent_fun()}           |
                   {send_off, agent:agent_fun()}, state()) -> {noreply, state()} | 
-                                                             {stop, normal | {invalid_state_value, any()}}.
+                                                             {noreply, state(), timeout()} |
+                                                             {stop, normal | {invalid_state_value, any()}, state()}.
                                     
 handle_cast ({add_watch, Fun}, State) ->
   Pid = agent_value_watch:new({gen, self()}, Fun),
   erlang:monitor(process, Pid),
   {noreply, State};
-handle_cast ({'$next', Next}, State) ->
+handle_cast ({'$next', Next, undefined, _}, State) ->
   ?MODULE:next(Next, State);
+handle_cast ({'$next', Next, Vsn, OffFun}, State) ->
+  ?MODULE:next(Next, State, {Vsn, OffFun});
 handle_cast (shutdown, State) ->
   {stop, normal, State};
 handle_cast ({validation, VFun}, State) ->
@@ -84,8 +90,8 @@ handle_cast ({timeout, TFun}, State) ->
   {noreply, State#state{tfun = TFun}};
 handle_cast ({send, Fun}, State = #state{value = V}) ->
   ?MODULE:next(Fun(?SELF, V), State);
-handle_cast ({send_off, Fun}, State) ->
-  ?MODULE:send_off(Fun, State).
+handle_cast ({send_off, Fun, Versioned}, State) ->
+  ?MODULE:send_off(Fun, State, Versioned).
 
 %% @private
 %% @doc Handles implementation internal non-gen_server messages.
@@ -93,7 +99,9 @@ handle_cast ({send_off, Fun}, State) ->
 %% See {@std_doc gen_server.html#Module:handle_info-2 gen_server `handle_info' callback}
 %% 
 -spec handle_info ({'DOWN', any(), process, pid(), any()} |
-                   timeout, state()) -> {noreply, state()} | {stop, {invalid_state_value, any()}, state()}.
+                   timeout, state()) -> {noreply, state()} | 
+                                        {noreply, state(), timeout()} |
+                                        {stop, {invalid_state_value, any()}, state()}.
 
 handle_info ({'DOWN', _, process, Pid, Info}, State) ->
   error_logger:error_report([{?MODULE, monitor_message},
@@ -125,37 +133,70 @@ terminate (_Reason, _State) ->
 code_change (_OldVsn, State, _Extra) ->
   {ok, State}.
 
-%% @hidden
--spec next (agent:callback_result(), state()) -> {noreply, state()} | {stop, {invalid_state_value, any()}}.
+%% @hidden 
+-spec next (agent:callback_result(),
+            state()) -> {noreply, state()} |
+                        {noreply, state(), timeout()} |
+                        {stop, {invalid_state_value, any()}, state()}.
 
-next ({ok, NV}, State = #state{value = V, vfun = Fun}) ->
+next (Next, State) ->
+  next(Next, State, undefined).
+
+-compile ({inline, [next/2]}).
+
+%% @hidden
+-spec next (agent:callback_result(),
+            state(),
+            {agent:value_vsn(), agent:agent_fun()} | undefined) -> {noreply, state()} |
+                                                                   {noreply, state(), timeout()} |
+                                                                   {stop, {invalid_state_value, any()}, state()}.
+
+next (Next, State, undefined) -> %% ignore the version
+  next_aux(Next, State);
+next (Next, State = #state{vsn = Vsn0}, {Vsn0, _}) -> %% no change in version
+  next_aux(Next, State);
+next (_Next, State, {_, OffFun}) -> %% change in version
+  error_logger:info_report([{module, ?MODULE},
+                            {where, shift_state},
+                            {what, transaction_retry},
+                            {transaction, OffFun},
+                            {agent, self()}]),
+  send_off(OffFun, State, true).
+
+%% @hidden
+-spec next_aux (agent:callback_result(), state()) -> {noreply, state(), timeout()} |
+                                                     {stop, {invalid_state_value, any()}, state()}.
+
+next_aux (Next, State = #state{value =V, vfun = Fun}) ->
+  {ok, NV, Timeout} = case Next of
+                        {ok, NV0} -> {ok, NV0, infinity};
+                        Other     -> Other
+                      end,
   case Fun(NV) of
     true ->
       notify_watchers(V, NV),
-      {noreply, State#state{value = NV}};
-    false ->
-      {stop, {invalid_state_value, NV}, State}
-  end;
-next ({ok, NV, Timeout}, State = #state{value = V, vfun = Fun}) ->
-  case Fun(NV) of
-    true ->
-      notify_watchers(V, NV),
-      {noreply, State#state{value = NV}, Timeout};
+      {noreply, State#state{value = NV, vsn = erlang:make_ref()}, Timeout};
     false ->
       {stop, {invalid_state_value, NV}, State}
   end.
 
+
 %% @private
 %% @doc Starts send-off process.
 %%
--spec send_off (agent:agent_fun(), state()) -> {noreply, state()}.
+-spec send_off (agent:agent_fun(), state(), boolean()) -> {noreply, state()}.
 
-send_off (Fun, State = #state{value = V}) ->
+send_off (Fun, 
+          State = #state{value = V, vsn = Vsn}, 
+          Versioned) ->
   Self = self(),
-  erlang:spawn(fun () ->
-                   Next = Fun(?REF(Self), V),
-                   gen_server:cast(Self, {'$next', Next})
-               end),
+  erlang:spawn_link(fun () ->
+                        Next = Fun(?REF(Self), V),
+                        gen_server:cast(Self, {'$next', Next, case Versioned of
+                                                                true  -> Vsn;
+                                                                false -> undefined
+                                                              end, Fun})
+                    end),
   {noreply, State}.
 
 %% @private

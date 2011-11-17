@@ -7,7 +7,7 @@
 -module (agent_proc).
 -author ("Damian T. Dobroczy\\\\'nski <qoocku@gmail.com>").
 -export ([start/1,
-          send_off/3,
+          send_off/4,
           init/1,
           loop/1]).
 
@@ -36,7 +36,7 @@ start ([State0, VFun, TFun]) ->
 -spec init (state()) -> no_return().
 
 init (State) ->
-  loop(State).
+  loop(State#state{vsn = erlang:make_ref()}).
 
 %% @private
 %% @doc Agent process main loop.
@@ -47,7 +47,8 @@ loop (stop) ->
   ok;
 loop (State = #state{value = Value,
                      tfun  = TFun,
-                     vfun  = VFun}) ->
+                     vfun  = VFun,
+                     vsn   = Vsn}) ->
   Self = self(),
   Next = receive
            {'DOWN', _, process, Watcher, Info} ->
@@ -57,8 +58,13 @@ loop (State = #state{value = Value,
                                         {watcher_pid, Watcher},
                                         {agent, self()}]),
              none;
-           {'$next', Next1} ->
+           {'$next', Next1, {undefined, _}} ->
              Next1;
+           {'$next', Next1, {Vsn, _}} ->
+             Next1;
+           {'$next', _Next1, {_Vsn0, OffFun}} ->
+             spawn_send_off(Vsn, Value, OffFun),
+             none;
            {add_watch, Fun} ->
              Watcher = agent_value_watch:new(self(), Fun),
              erlang:monitor(process, Watcher),
@@ -77,12 +83,14 @@ loop (State = #state{value = Value,
            {timeout, Fun} when is_function(Fun) ->
              {tfun, Fun};
            timeout ->
-             eval(timeout, Self, TFun, Value);
+             eval(timeout, Self, TFun, Value, Vsn);
            {send, Fun} when is_function(Fun) ->
-             eval(send, Self, Fun, Value);
-           {send_off, Fun} when is_function(Fun) ->
-             Self = self(),
-             erlang:spawn(?MODULE, send_off, [Self, Value, Fun]),
+             eval(send, Self, Fun, Value, Vsn);
+           {send_off, Fun, Bool} when is_function(Fun) ->
+             spawn_send_off(case Bool of
+                              true -> Vsn;
+                              false -> undefined
+                            end, Value, Fun),
              none;
            shutdown ->
              stop;
@@ -117,22 +125,22 @@ error_report (Context, E, R, Pid, Rest) ->
             agent:validation_fun() |
             agent:timeout_fun()    |
             agent:agent_fun(),
-            any()) -> agent:callback_result() | boolean().
+            any(), agent:value_vsn()) -> agent:callback_result() | boolean().
                
-eval (validation, Pid, Fun, V) ->
+eval (validation, Pid, Fun, V, Vsn) ->
   try Fun(V) of
       Value -> Value
   catch
     E:R ->
-      error_report(validation, E, R, Pid, [{function, Fun},{argument, V}]),
+      error_report(validation, E, R, Pid, [{function, Fun},{argument, V},{vsn, Vsn}]),
       false
   end;
-eval (Context, Pid, Fun, V) ->
+eval (Context, Pid, Fun, V, Vsn) ->
   try Fun(Pid, V) of
       Next -> Next
   catch
     E:R ->
-      error_report(Context, E, R, Pid, [{function, Fun},{argument, V}]),
+      error_report(Context, E, R, Pid, [{function, Fun},{argument, V},{vsn, Vsn}]),
       case Context of
         send_off -> {ok, V};
         _Other   -> stop
@@ -160,20 +168,20 @@ next ({vfun, Fun}, State = #state{value = V}) ->
   S1#state{vfun = Fun};
 next ({tfun, Fun}, State) ->
   State#state{tfun = Fun};
-next ({ok, NewValue}, State = #state{value = V, vfun = VFun}) ->
-  case eval(validation, self(), VFun, NewValue) of
+next ({ok, NewValue}, State = #state{value = V, vfun = VFun, vsn = Vsn}) ->
+  case eval(validation, self(), VFun, NewValue, Vsn) of
     true ->
       notify_watchers(V, NewValue),
-      State#state{value = NewValue};
+      State#state{value = NewValue, vsn = erlang:make_ref()};
     false ->
       exit({invalid_state_value, NewValue})
   end;
-next ({ok, NewValue, Timeout}, State = #state{value = V, vfun = VFun}) ->
-  case eval(validation, self(), VFun, NewValue) of
+next ({ok, NewValue, Timeout}, State = #state{value = V, vfun = VFun, vsn = Vsn}) ->
+  case eval(validation, self(), VFun, NewValue, Vsn) of
     true ->
       erlang:send_after(Timeout, self(), timeout),
       notify_watchers(V, NewValue),
-      State#state{value = NewValue};
+      State#state{value = NewValue, vsn = erlang:make_ref()};
     false ->
       exit({invalid_state_value, NewValue})
   end;
@@ -183,11 +191,17 @@ next (Other, _State) ->
 %% @hidden
 %% @doc The short-run "send-off" process body.
 %%
--spec send_off (pid(), any(), agent:agent_fun()) -> any().
+-spec send_off (pid(), agent:value_vsn(), any(), agent:agent_fun()) -> any().
 
-send_off (Self, Value, Fun) ->
-  Next = eval(send_off, Self, Fun, Value),
-  Self ! {'$next', Next}.
+send_off (Self, Vsn, Value, Fun) ->
+  Next = eval(send_off, Self, Fun, Value, Vsn),
+  Self ! {'$next', Next, {Vsn, Fun}}.
+
+%% @hidden
+
+spawn_send_off (Vsn, Value, Fun) ->
+  Self = self(),
+  erlang:spawn(?MODULE, send_off, [Self, Vsn, Value, Fun]).
 
 %% @hidden
 %% @doc Notfies the watching processes that the agent's state value has been set.
