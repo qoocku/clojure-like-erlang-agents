@@ -18,8 +18,12 @@
    Uses <a href="http://www.erlang.org/doc/man/gen_server.html" target="_top">gen_server</a> framework.
 <h2><a name="types">Data Types</a></h2>
 
+<h3 class="typedecl"><a name="type-ref">ref()</a></h3>
+<p><b>abstract datatype</b>: <tt>ref()</tt></p>
+<p>  The implementation process reference type.</p>
+
 <h3 class="typedecl"><a name="type-state">state()</a></h3>
-<p><tt>state() = #state{value = undefined | any(), vfun = undefined | <a href="agent.html#type-validation_fun">agent:validation_fun()</a>, tfun = undefined | <a href="agent.html#type-timeout_fun">agent:timeout_fun()</a>}</tt></p>
+<p><tt>state() = #state{value = undefined | any(), vsn = undefined | <a href="agent.html#type-value_vsn">agent:value_vsn()</a>, vfun = undefined | <a href="agent.html#type-validation_fun">agent:validation_fun()</a>, tfun = undefined | <a href="agent.html#type-timeout_fun">agent:timeout_fun()</a>}</tt></p>
 
 
 <h2><a name="index">Function Index</a></h2>
@@ -29,7 +33,7 @@
 <tr><td valign="top"><a href="#handle_info-2">handle_info/2</a></td><td>Handles implementation internal non-gen_server messages.</td></tr>
 <tr><td valign="top"><a href="#init-1">init/1</a></td><td>Initialises the agent's process.</td></tr>
 <tr><td valign="top"><a href="#notify_watchers-2">notify_watchers/2*</a></td><td>Notify agent's watchers that the state value has been set.</td></tr>
-<tr><td valign="top"><a href="#send_off-2">send_off/2</a></td><td>Starts send-off process.</td></tr>
+<tr><td valign="top"><a href="#send_off-3">send_off/3</a></td><td>Starts send-off process.</td></tr>
 <tr><td valign="top"><a href="#terminate-2">terminate/2</a></td><td>Terminates the agent's process.</td></tr>
 </table>
 
@@ -51,14 +55,14 @@
 
 <h3 class="function"><a name="handle_cast-2">handle_cast/2</a></h3>
 <div class="spec">
-<p><tt>handle_cast(X1::{add_watch, <a href="agent.html#type-watch_fun">agent:watch_fun()</a>} | {'$next', <a href="agent.html#type-callback_result">agent:callback_result()</a>} | shutdown | {validation, <a href="agent.html#type-validation_fun">agent:validation_fun()</a>} | {timeout, <a href="agent.html#type-timeout_fun">agent:timeout_fun()</a>} | {send, <a href="agent.html#type-agent_fun">agent:agent_fun()</a>} | {send_off, <a href="agent.html#type-agent_fun">agent:agent_fun()</a>}, State::<a href="#type-state">state()</a>) -&gt; {noreply, <a href="#type-state">state()</a>} | {stop, normal | {invalid_state_value, any()}}</tt><br></p>
+<p><tt>handle_cast(X1::{add_watch, <a href="agent.html#type-watch_fun">agent:watch_fun()</a>} | {'$next', <a href="agent.html#type-callback_result">agent:callback_result()</a>, <a href="agent.html#type-value_vsn">agent:value_vsn()</a>} | shutdown | {validation, <a href="agent.html#type-validation_fun">agent:validation_fun()</a>} | {timeout, <a href="agent.html#type-timeout_fun">agent:timeout_fun()</a>} | {send, <a href="agent.html#type-agent_fun">agent:agent_fun()</a>} | {send_off, <a href="agent.html#type-agent_fun">agent:agent_fun()</a>}, State::<a href="#type-state">state()</a>) -&gt; {noreply, <a href="#type-state">state()</a>} | {noreply, <a href="#type-state">state()</a>, timeout()} | {stop, normal | {invalid_state_value, any()}, <a href="#type-state">state()</a>}</tt><br></p>
 </div><p>Handles implementation internal asynchronous messages.
   See <a href="http://www.erlang.org/doc/man/gen_server.html#Module:handle_cast-2" target="_top">gen_server `handle_cast' callback</a>
  </p>
 
 <h3 class="function"><a name="handle_info-2">handle_info/2</a></h3>
 <div class="spec">
-<p><tt>handle_info(X1::{'DOWN', any(), process, pid(), any()} | timeout, State::<a href="#type-state">state()</a>) -&gt; {noreply, <a href="#type-state">state()</a>} | {stop, {invalid_state_value, any()}, <a href="#type-state">state()</a>}</tt><br></p>
+<p><tt>handle_info(X1::{'DOWN', any(), process, pid(), any()} | timeout, State::<a href="#type-state">state()</a>) -&gt; {noreply, <a href="#type-state">state()</a>} | {noreply, <a href="#type-state">state()</a>, timeout()} | {stop, {invalid_state_value, any()}, <a href="#type-state">state()</a>}</tt><br></p>
 </div><p>Handles implementation internal non-gen_server messages.
   The messages comes from timer and watchers processes.
   See <a href="http://www.erlang.org/doc/man/gen_server.html#Module:handle_info-2" target="_top">gen_server `handle_info' callback</a>
@@ -66,7 +70,7 @@
 
 <h3 class="function"><a name="init-1">init/1</a></h3>
 <div class="spec">
-<p><tt>init(X1::{any(), <a href="agent.html#type-validation_fun">agent:validation_fun()</a>, <a href="agent.html#type-timeout_fun">agent:timeout_fun()</a>}) -&gt; {ok, <a href="#type-state">state()</a>}</tt><br></p>
+<p><tt>init(Value0::{any(), <a href="agent.html#type-validation_fun">agent:validation_fun()</a>, <a href="agent.html#type-timeout_fun">agent:timeout_fun()</a>}) -&gt; {ok, <a href="#type-state">state()</a>}</tt><br></p>
 </div><p>Initialises the agent's process.
   See <a href="http://www.erlang.org/doc/man/gen_server.html#Module:init-1" target="_top">gen_server `init' callback</a>
  </p>
@@ -77,9 +81,9 @@
 </div><p>Notify agent's watchers that the state value has been set.</p>
 <p><b>See also:</b> <a href="agent_proc.html#notify_watchers-2">agent_proc:notify_watchers/2</a>.</p>
 
-<h3 class="function"><a name="send_off-2">send_off/2</a></h3>
+<h3 class="function"><a name="send_off-3">send_off/3</a></h3>
 <div class="spec">
-<p><tt>send_off(Fun::<a href="agent.html#type-agent_fun">agent:agent_fun()</a>, State::<a href="#type-state">state()</a>) -&gt; {noreply, <a href="#type-state">state()</a>}</tt><br></p>
+<p><tt>send_off(Fun::<a href="agent.html#type-agent_fun">agent:agent_fun()</a>, State::<a href="#type-state">state()</a>, Versioned::boolean()) -&gt; {noreply, <a href="#type-state">state()</a>}</tt><br></p>
 </div><p>Starts send-off process.
  </p>
 
@@ -93,6 +97,6 @@
 <hr>
 
 <div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
-<p><i>Generated by EDoc, Nov 16 2011, 21:28:41.</i></p>
+<p><i>Generated by EDoc, Nov 17 2011, 09:23:52.</i></p>
 </body>
 </html>

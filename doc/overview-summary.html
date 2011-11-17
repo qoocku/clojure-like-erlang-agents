@@ -13,7 +13,8 @@
 processes. The following is a list of things you may want to do with such agents:</p>
 
 <ul>
-        <li><p>You may make them to evaluate a function against it's state. Let's call this <em>sending</em> a function to            
+        <li><p>You may make them to evaluate a function against it's state. Let's call this 
+            <em><a href="agent.html#send-2">sending</a></em> a function to            
 the agent so that the agent can evaluate it within it's own process:</p>
 
             <pre>
@@ -24,14 +25,14 @@ the agent so that the agent can evaluate it within it's own process:</p>
             </pre>
             </li>
 
-        <li><p>You may evaluate a function against an agent state in separate, short-term process. Let's call this <em>sending</em> a function 
-            <em>off</em> the agent:</p>
+        <li><p>You may evaluate a function against an agent state in separate, short-run process. Let's call this <em>sending</em> a function 
+            <em><a href="agent.html#send_off-2">off</a></em> the agent:</p>
 
             <pre>
             agent:send_off(Agt, fun (A, V) -&gt; {ok, V+1} end).
             </pre>
-            The new state would be "sent" back to the agent (using common Erlang message). Note, that no version control is hold
-            on the value ;). But it could be, we'll see.</li>
+            The new state would be "sent" back to the agent (using common Erlang message). By default, a versioning control is used.
+            If the updated agent's state value is older than the current value the function evaluation is respawned again.</li>
 
         <li><p>You may ask an agent for it's state value. This is different than Clojure implementation since Clojure's agents            
 state is directly accessed:</p>
@@ -56,15 +57,16 @@ state is directly accessed:</p>
 
 There are two implementations of the agent process:
 <ul>
-<li> OTP-compatible which uses <code>gen_server</code> (<a href="/home/damian/src/agents/doc/agent_srv.html">agent_srv</a> module)</li>
-<li> "raw" using simple loop-based process (<a href="/home/damian/src/agents/doc/agent_proc.html">agent_proc</a> module)</li>
+<li> OTP-compatible which uses <code>gen_server</code> (<a href="agent_srv.html">agent_srv</a> module)</li>
+<li> "raw" using simple loop-based process (<a href="agent_proc.html">agent_proc</a> module)</li>
 </ul><p>
-The first type of agent is started with <a href="/home/damian/src/agents/doc/agent.html#start-1">agent:start/1</a> and <a href="/home/damian/src/agents/doc/agent.html#start-3">agent:start/3</a> function,
-the latter with <a href="/home/damian/src/agents/doc/agent.html#start_link-1">agent:start_link/1</a> and <a href="/home/damian/src/agents/doc/agent.html#start_link-3">agent:start_link/3</a>.</p>
+The first type of agent is started with <a href="agent.html#start-1">agent:start/1</a> and <a href="agent.html#start-3">agent:start/3</a> function,
+the latter with <a href="agent.html#start_link-1">agent:start_link/1</a> and <a href="agent.html#start_link-3">agent:start_link/3</a>.</p>
 
-<p><a href="/home/damian/src/agents/doc/agent.html#send-2">agent:send/2</a> function uses Erlang message passing to transport given function to an agent. As it's been mentioned before,
-<a href="/home/damian/src/agents/doc/agent.html#send_off-2">agent:send_off/2</a> makes an agent process to create a separate process and send to it message containing funcion to be evaluated with the agent
-reference and the state value.</p>
+<p><a href="agent.html#send-2">agent:send/2</a> function uses Erlang message passing to transport given function to an agent. As it's been mentioned before,
+<a href="agent.html#send_off-2">agent:send_off/2,3</a> makes an agent process to create a separate process and send to it message containing funcion to be evaluated with the agent
+reference and the state value. The versioned <a href="agent.html#send_off-3">agent:send_off(Agent, Fun [, true])</a> may ends up in several respawning separate evaluation process
+(possibly infinite number of times ;)) if there's a version conflict on update.</p>
 
 <p>The "watchers" are implemented as separate long-run processes (non-OTP compatible, unsupervised) being monitored by an agent and monitoring the agent process. No ETS tables or such
 are used to keep the list of living "watchers". The implementation uses <a href="http://www.erlang.org/doc/man/erlang.html#process_info-2" target="_top">erlang:process_info(Pid, monitors)</a> to
@@ -86,23 +88,27 @@ All new state values are validated with "validation" function, which accepts new
      NewStateValue =/= 0
    end
 </pre><p>
-Both functions, "timeout" and "validation", may be set or get with <a href="/home/damian/src/agents/doc/agent.html#set-3">agent:set/3</a> and 
-<a href="/home/damian/src/agents/doc/agent.html#get-2">agent:get/2</a> functions.</p>
+Both functions, "timeout" and "validation", may be set or get with <a href="agent.html#set-3">agent:set/3</a> and 
+<a href="agent.html#get-2">agent:get/2</a> functions.</p>
 
 <h4><a name="Toys">Toys</a></h4>
 
-There is one toy in this package (not counting this application as a joke). This is <a href="/home/damian/src/agents/doc/agent_ref.html">agent_ref</a> module, which is
+There is one toy in this package (not counting this application as a joke). This is <a href="agent_ref.html">agent_ref</a> module, which is
 an abstract (parameterized) module just because I can. It allows to use <code>Agent:send(...)</code> notation. I saves typing. I cannot see other
 reasons to use this module. You may start tinkering with this typing:
 <pre>
 Agent = agent:start_ref(0),
 Agent:send(fun (_, V) -&gt; {ok, V+1} end).
 </pre><p>
-(the OTP equivalent is <a href="/home/damian/src/agents/doc/agent.html#start_link_ref-1">agent:start_link_ref/1,3</a>) and three-argument versions.</p>
+(the OTP equivalent is <a href="agent.html#start_link_ref-1">agent:start_link_ref/1,3</a>) and three-argument versions.</p>
+
+<h4><a name="Repository">Repository</a></h4>
+
+<p><a href="http://github.com/qoocku/clojure-like-erlang-agents" target="_top">Find at GitHub</a></p>
 
 (to be continued...)
 <hr>
 <div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
-<p><i>Generated by EDoc, Nov 16 2011, 21:28:41.</i></p>
+<p><i>Generated by EDoc, Nov 17 2011, 09:23:52.</i></p>
 </body>
 </html>

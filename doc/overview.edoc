@@ -48,15 +48,15 @@ processes. The following is a list of things you may want to do with such agents
 
 There are two implementations of the agent process:
 <ul>
-<li> OTP-compatible which uses `gen_server' ({@link //agents/agent_srv. agent_srv} module)</li>
-<li> "raw" using simple loop-based process ({@link //agents/agent_proc. agent_proc} module)</li>
+<li> OTP-compatible which uses `gen_server' ({@link agent_srv. agent_srv} module)</li>
+<li> "raw" using simple loop-based process ({@link agent_proc. agent_proc} module)</li>
 </ul>
-The first type of agent is started with {@link //agents/agent:start/1. agent:start/1} and {@link //agents/agent:start/3. agent:start/3} function,
-the latter with {@link //agents/agent:start_link/1. agent:start_link/1} and {@link //agents/agent:start_link/3. agent:start_link/3}.
+The first type of agent is started with {@link agent:start/1. agent:start/1} and {@link agent:start/3. agent:start/3} function,
+the latter with {@link agent:start_link/1. agent:start_link/1} and {@link agent:start_link/3. agent:start_link/3}.
 
-{@link //agents/agent:send/2. agent:send/2} function uses Erlang message passing to transport given function to an agent. As it's been mentioned before,
-{@link //agents/agent:send_off/2. agent:send_off/2,3} makes an agent process to create a separate process and send to it message containing funcion to be evaluated with the agent
-reference and the state value. The versioned {@ link agent:send_off/3. agent:send_off(Agent, Fun [, true])} may ends up in several respawning separate evaluation process
+{@link agent:send/2. agent:send/2} function uses Erlang message passing to transport given function to an agent. As it's been mentioned before,
+{@link agent:send_off/2. agent:send_off/2,3} makes an agent process to create a separate process and send to it message containing funcion to be evaluated with the agent
+reference and the state value. The versioned {@link agent:send_off/3. agent:send_off(Agent, Fun [, true])} may ends up in several respawning separate evaluation process
 (possibly infinite number of times ;)) if there's a version conflict on update.
 
 The "watchers" are implemented as separate long-run processes (non-OTP compatible, unsupervised) being monitored by an agent and monitoring the agent process. No ETS tables or such
@@ -79,22 +79,22 @@ All new state values are validated with "validation" function, which accepts new
      NewStateValue =/= 0
    end
 </pre>
-Both functions, "timeout" and "validation", may be set or get with {@link //agents/agent:set/3. agent:set/3} and 
-{@link //agents/agent:get/2. agent:get/2} functions.
+Both functions, "timeout" and "validation", may be set or get with {@link agent:set/3. agent:set/3} and 
+{@link agent:get/2. agent:get/2} functions.
 
 === Toys ===
 
-There is one toy in this package (not counting this application as a joke). This is {@link //agents/agent_ref. agent_ref} module, which is
+There is one toy in this package (not counting this application as a joke). This is {@link agent_ref. agent_ref} module, which is
 an abstract (parameterized) module just because I can. It allows to use `Agent:send(...)' notation. I saves typing. I cannot see other
 reasons to use this module. You may start tinkering with this typing:
 <pre>
 Agent = agent:start_ref(0),
 Agent:send(fun (_, V) -> {ok, V+1} end).
 </pre>
-(the OTP equivalent is {@link //agents/agent:start_link_ref/1. agent:start_link_ref/1,3}) and three-argument versions.
+(the OTP equivalent is {@link agent:start_link_ref/1. agent:start_link_ref/1,3}) and three-argument versions.
 
 === Repository ===
 
-["https://github.com/qoocku/clojure-like-erlang-agents" Find at GitHub]
+[http://github.com/qoocku/clojure-like-erlang-agents Find at GitHub]
 
 (to be continued...)
